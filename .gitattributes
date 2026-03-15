@@ -1,0 +1,6 @@
+# Ignorar el código autogenerado de las plataformas de Flutter
+homeflow/android/** linguist-vendored
+homeflow/ios/** linguist-vendored
+homeflow/linux/** linguist-vendored
+homeflow/macos/** linguist-vendored
+homeflow/windows/** linguist-vendored

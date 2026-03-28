@@ -3,6 +3,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'logic/alerts/alerts_bloc.dart';
+import 'data/alerts_repository.dart';
+
 import 'data/dashboard_repository.dart';
 import 'logic/dashboard/dashboard_bloc.dart';
 
@@ -38,6 +41,7 @@ class MainApp extends StatelessWidget {
         useMaterial3: true,
         fontFamily: 'Outfit', 
         colorSchemeSeed: const Color(0xFFE5EDFC),
+        scaffoldBackgroundColor: const Color(0xFFE5EDFC),
       ),
 
       initialRoute: '/', 
@@ -51,8 +55,12 @@ class MainApp extends StatelessWidget {
               create: (context) => DashboardBloc(
                 repository: DashboardRepository(),
                 )..add(StartListeningReadings()),
-            )
-            // AlertsBloc 
+            ),
+            BlocProvider(
+              create: (context) => AlertsBloc(
+                alertsRepository: AlertsRepository(),
+              )..add(StartListeningAlerts()),
+            ),
           ],
           child: const MainScaffold(),
         ), 

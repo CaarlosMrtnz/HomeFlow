@@ -25,4 +25,16 @@ class DashboardRepository {
           return listOfMaps.map((json) => Reading.fromJson(json)).toList();
         });
   }
+
+  /// Pide a la base de datos el resumen semanal ya calculado por la Vista SQL.
+  /// Retorna un Future porque las vistas con SUM/GROUP BY no soportan webhooks en tiempo real.
+  Future<List<dynamic>> getWeeklySummary() async {
+    // Se pide los datos a la vista que creamos.
+    final response = await _supabase
+        .from('weekly_usage_summary')
+        .select();
+        
+    return response;
+  }
+
 }

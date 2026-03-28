@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:homeflow/ui/alerts/notification_screen.dart';
 import 'package:homeflow/ui/dashboard/dashboard_screen.dart';
+import 'package:homeflow/ui/insights/insights_screen.dart';
 
 class MainScaffold extends StatefulWidget {
   const MainScaffold({super.key});
@@ -15,7 +16,7 @@ class _MainScaffoldState extends State<MainScaffold> {
   // Contenedores temporales
   final List<Widget> _screens = [
     const DashboardScreen(),
-    Container(color: Colors.blue, child: const Center(child: Text('Insights'))),
+    const InsightsScreen(),
     const NotificationsScreen(),
     Container(color: Colors.orange, child: const Center(child: Text('Search'))),
     Container(color: Colors.purple, child: const Center(child: Text('Account'))),

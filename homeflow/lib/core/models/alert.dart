@@ -10,6 +10,7 @@ class Alert extends Equatable {
   final AlertDescription description;
   final bool isRead; 
   final DateTime createdAt; 
+  final int? supplyTypeId;
 
   const Alert({
      required this.id,
@@ -18,6 +19,7 @@ class Alert extends Equatable {
      required this.description,
      required this.isRead,
      required this.createdAt,
+     required this.supplyTypeId,
   });
 
   // Factory para convertir el JSON que nos proporciona Supabase a nuestro objeto Dart
@@ -30,6 +32,7 @@ class Alert extends Equatable {
       description: AlertDescription.fromString(json['description'] as String),
       isRead: json['is_read'] as bool,
       createdAt: DateTime.parse(json['created_at'] as String),
+      supplyTypeId: json['supply_type_id'],
     );
   }
   

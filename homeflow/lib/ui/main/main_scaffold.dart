@@ -58,6 +58,11 @@ class _MainScaffoldState extends State<MainScaffold> {
               unselectedItemColor: Colors.grey,
               showSelectedLabels: false,
               showUnselectedLabels: false,
+
+              // Con esto el widget recalcula su altura mínima obligatoria, eliminando ese margen inferior inútil y soluciona un error (bottom overflow)
+              selectedFontSize: 0.0,
+              unselectedFontSize: 0.0,
+
               items: const [
                 BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
                 BottomNavigationBarItem(icon: Icon(Icons.insights), label: 'Insights'),

@@ -75,29 +75,35 @@ class DashboardScreen extends StatelessWidget {
 
                   // Tarjetas
                   _buildSupplyCard(
+                    tagText: 'Electricity', 
                     title: 'Today\'s\nUsage',
                     value: elecTotal.toStringAsFixed(2),
                     unit: ' kWh',
                     icon: Icons.bolt,
-                    iconColor: const Color(0xFFFFE957), valueColor: const Color(0xFFFFE957),
+                    iconColor: const Color(0xFFFFE957), 
+                    valueColor: const Color(0xFFFFE957),
                   ),
                   const SizedBox(height: 16),
                   
                   _buildSupplyCard(
+                    tagText: 'Water', 
                     title: 'Today\'s\nUsage',
                     value: waterTotal.toStringAsFixed(2),
                     unit: ' L',
                     icon: Icons.water_drop,
-                    iconColor: const Color(0xFF71B9FD), valueColor: const Color(0xFF71B9FD),
+                    iconColor: const Color(0xFF71B9FD), 
+                    valueColor: const Color(0xFF71B9FD),
                   ),
                   const SizedBox(height: 16),
                   
                   _buildSupplyCard(
+                    tagText: 'Gas',
                     title: 'Today\'s\nUsage',
                     value: gasTotal.toStringAsFixed(2),
                     unit: ' m³',
                     icon: Icons.local_fire_department,
-                    iconColor: const Color(0xFFBDB2FF), valueColor: const Color(0xFFBDB2FF),
+                    iconColor: const Color(0xFFBDB2FF), 
+                    valueColor: const Color(0xFFBDB2FF),
                   ),
                   
                   // Espacio extra para que la última tarjeta no la tape el menú flotante
@@ -113,6 +119,7 @@ class DashboardScreen extends StatelessWidget {
   }
 
   Widget _buildSupplyCard({
+    required String tagText,
     required String title,
     required String value,
     required String unit,
@@ -135,6 +142,7 @@ class DashboardScreen extends StatelessWidget {
       ),
       child: Stack(
         children: [
+          // El icono gigante difuminado de fondo a la derecha
           Positioned(
             right: 0,
             top: 10,
@@ -159,7 +167,6 @@ class DashboardScreen extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Fila superior: Etiqueta "Today" e Icono de Información
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,13 +177,24 @@ class DashboardScreen extends StatelessWidget {
                       color: iconColor.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text(
-                      'Today',
-                      style: TextStyle(
-                        color: iconColor == const Color(0xFFFFE957) ? const Color(0xFFD4C02E) : iconColor, // Oscurecemos el amarillo para que se lea mejor sobre fondo blanco
-                        fontWeight: FontWeight.w700, 
-                        fontSize: 13
-                      ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min, // Crucial para que no se expanda por toda la tarjeta
+                      children: [
+                        Icon(
+                          icon,
+                          size: 14, 
+                          color: iconColor, 
+                        ),
+                        const SizedBox(width: 6), 
+                        Text(
+                          tagText, 
+                          style: const TextStyle(
+                            color: Color(0xFF203DA3), // Tu azul marino corporativo
+                            fontWeight: FontWeight.w700, 
+                            fontSize: 13
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   Icon(Icons.info_outline, color: const Color(0xFF203DA3).withOpacity(0.5), size: 22),
@@ -185,13 +203,13 @@ class DashboardScreen extends StatelessWidget {
               
               const SizedBox(height: 24),
               
-              // Textos de consumo
+              // Textos de consumo y título
               Text(
                 title,
                 style: const TextStyle(
                   fontWeight: FontWeight.w700, 
                   fontSize: 15, 
-                  color: Color(0xFF1E293B), // Azul muy oscuro casi negro
+                  color: Color(0xFF1E293B), 
                   height: 1.2
                 ),
               ),

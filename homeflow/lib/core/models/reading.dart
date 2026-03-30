@@ -5,6 +5,7 @@ class Reading extends Equatable {
   final int id;
   final String userId;
   final int supplyTypeId;
+  final int deviceId;
   final double value;
   final DateTime createdAt;
 
@@ -12,6 +13,7 @@ class Reading extends Equatable {
     required this.id,
     required this.userId,
     required this.supplyTypeId,
+    required this.deviceId,
     required this.value,
     required this.createdAt,
   });
@@ -22,6 +24,7 @@ class Reading extends Equatable {
       id: json['id'] as int,
       userId: json['user_id'] as String,
       supplyTypeId: json['supply_type_id'] as int,
+      deviceId: json['device_id'] as int,
       // Supabase a veces devuelve un 'int' si el número no tiene decimales (ej. 20 en vez de 20.0). Usar (json['value'] ?? 0).toDouble() evita crasheos en tiempo de ejecución.
       value: (json['value'] ?? 0).toDouble(),
       // Supabase devuelve las fechas en formato ISO-8601 (String)

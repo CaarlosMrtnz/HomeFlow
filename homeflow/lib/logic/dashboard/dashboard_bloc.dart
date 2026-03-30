@@ -36,8 +36,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         add(_OnReadingsUpdated(readings));
       },
       onError: (error) {
-        // IMPORTANTE: emit() aquí dentro daría error porque no estamos en una función on<Event>, 
-        // así que lo correcto sería despachar un evento de error, pero para no complicarlo lo dejamos así.
+        // emit() aquí dentro daría error porque no estamos en una función on<Event>, así que lo correcto sería despachar un evento de error, pero para no complicarlo se queda así.
       }
     );
   }

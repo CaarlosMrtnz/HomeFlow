@@ -1,4 +1,4 @@
-// Tipar fuertemente los strings que vienen de Supabase nos quita de en medio los magic strings y previene fallos tontos al comparar valores en la UI.
+// Tipar los strings que vienen de Supabase nos quita de en medio los magic strings y previene fallos tontos al comparar valores en la UI.
 
 enum SupplyName {
   electricity('Electricity'),

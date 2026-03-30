@@ -33,12 +33,9 @@ class AlertsBloc extends Bloc<AlertsEvent, AlertsState> {
             _alertsRepository.getRealtimeAlerts(),
             // Cada vez que el simulador de Python inserta un dato, entra por aquí. 
             onData: (alertsList) {
-            // Este print es el que cuenta: si sale aquí, la UI SE ACTUALIZA
-            print('DEBUG UI: Emitiendo ${alertsList.length} alertas a la pantalla');
             return AlertsLoaded(alertsList);
             },
             onError: (error, stackTrace) {
-                print('DEBUG ERROR: $error');
                 return AlertsError(error.toString());
             },
         );

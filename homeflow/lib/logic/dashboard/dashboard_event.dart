@@ -1,6 +1,6 @@
 part of 'dashboard_bloc.dart';
 
-// Clase base para todas las acciones que le vamos a pedir al BLoC desde la interfaz.
+// Clase base para todas las acciones que se le piden al BLoC desde la interfaz.
 sealed class DashboardEvent extends Equatable {
   const DashboardEvent();
 

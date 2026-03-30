@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 import '../../logic/dashboard/dashboard_bloc.dart';
-import '../../core/models/reading.dart';
 
 class InsightsScreen extends StatefulWidget {
   const InsightsScreen({super.key});
@@ -89,7 +88,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
                     ),
                     const SizedBox(height: 40),
 
-                    // Fila de 4 Botones (General + Suministros)
+                    // Fila de 4 Botones (general + suministros)
                     Row(
                       children: [
                         Expanded(

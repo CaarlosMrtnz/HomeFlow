@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:homeflow/ui/account/account_screen.dart';
 import 'package:homeflow/ui/alerts/notification_screen.dart';
 import 'package:homeflow/ui/dashboard/dashboard_screen.dart';
 import 'package:homeflow/ui/insights/insights_screen.dart';
@@ -18,8 +19,7 @@ class _MainScaffoldState extends State<MainScaffold> {
     const DashboardScreen(),
     const InsightsScreen(),
     const NotificationsScreen(),
-    Container(color: Colors.orange, child: const Center(child: Text('Search'))),
-    Container(color: Colors.purple, child: const Center(child: Text('Account'))),
+    const AccountScreen(),
   ];
 
   @override
@@ -68,7 +68,6 @@ class _MainScaffoldState extends State<MainScaffold> {
                 BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
                 BottomNavigationBarItem(icon: Icon(Icons.insights), label: 'Insights'),
                 BottomNavigationBarItem(icon: Icon(Icons.notifications_none), label: 'Notifications'),
-                BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
                 BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Account'),
               ],
             ),

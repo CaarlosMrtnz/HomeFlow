@@ -10,9 +10,18 @@ class AlertsRepository {
 
   /// Stream de alertas en tiempo real que priorizan las no leídas
   Stream<List<Alert>> getRealtimeAlerts() {
+
+    final userId = _supabase.auth.currentUser?.id;
+    
+    // Si no hay sesión, cerramos el grifo
+    if (userId == null) {
+      return const Stream.empty();
+    }
+    
     return _supabase
         .from('alerts')
         .stream(primaryKey: ['id'])
+        .eq('user_id', userId)
         .order('created_at', ascending: false)
         .map((listOfMaps) => listOfMaps.map((json) => Alert.fromJson(json)).toList());
   }

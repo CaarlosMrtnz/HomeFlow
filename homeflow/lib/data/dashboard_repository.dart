@@ -12,10 +12,18 @@ class DashboardRepository {
 
   /// Devuelve un flujo (Stream) de lecturas en tiempo real.
   Stream<List<Reading>> getRealtimeReadings() {
+
+    final userId = _supabase.auth.currentUser?.id;
+    
+    if (userId == null) {
+      return const Stream.empty(); // Si no hay sesión, no abrimos el canal
+    }
+    
     return _supabase
         .from('readings')
         // El primaryKey es lo que permite al SDK conciliar los eventos del WebSocket (inserts, updates, deletes) para mantener la caché del stream actualizada y sin duplicados.
         .stream(primaryKey: ['id'])
+        .eq('user_id', userId)
         // Lecturas más recientes primero
         .order('created_at', ascending: false)
         // Limite de los últimos 100 registros para no saturar la memoria del móvil
@@ -26,13 +34,17 @@ class DashboardRepository {
         });
   }
 
-  /// Pide a la base de datos el resumen semanal ya calculado por la Vista SQL.
-  /// Retorna un Future porque las vistas con SUM/GROUP BY no soportan webhooks en tiempo real.
   Future<List<dynamic>> getWeeklySummary() async {
-    // Se pide los datos a la vista que creamos.
+    final userId = _supabase.auth.currentUser?.id;
+    
+    if (userId == null) {
+      return []; // Cortafuegos, sin usuario no hay datos
+    }
+
     final response = await _supabase
         .from('weekly_usage_summary')
-        .select();
+        .select()
+        .eq('user_id', userId); 
         
     return response;
   }

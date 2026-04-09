@@ -71,6 +71,68 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  void _showInfoBottomSheet(BuildContext context, String supplyType) {
+    String description = '';
+    
+    switch (supplyType) {
+      case 'Electricity':
+        description = 'Este indicador refleja la energía eléctrica total consumida en la vivienda desde el inicio del día. Se mide en kilovatios hora (kWh) y es fundamental para entender el comportamiento de tu demanda energética y optimizar el ahorro en tu factura.';
+        break;
+      case 'Water':
+        description = 'Representa el volumen acumulado de agua que ha fluido por la instalación hoy, medido en litros (L). Monitorizar este dato de forma constante te ayuda a tener un control preciso sobre el gasto hídrico y a identificar posibles anomalías o consumos fantasma.';
+        break;
+      case 'Gas':
+        description = 'Registra el consumo de gas natural acumulado durante la jornada actual, expresado en metros cúbicos (m³). Es una métrica esencial para supervisar el uso de los sistemas de climatización y agua caliente, permitiéndote gestionar mejor el confort térmico de tu hogar.';
+        break;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      builder: (context) {
+        return Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.info, color: Color(0xFF71B9FD), size: 28),
+                  const SizedBox(width: 12),
+                  Text(
+                    'About $supplyType',
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF1E293B)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                description,
+                style: const TextStyle(fontSize: 16, color: Color(0xFF64748B), height: 1.5, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFE5EDFC),
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  ),
+                  child: const Text('Entendido', style: TextStyle(color: Color(0xFF203DA3), fontWeight: FontWeight.w700)),
+                ),
+              )
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -177,7 +239,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             )));
           },
           child: _buildSupplyCard(
-            tagText: 'Today', // Ajustado a tu imagen
+            tagText: 'Water', 
             title: 'Today\'s\nUsage',
             value: waterTotal.toStringAsFixed(2),
             unit: ' L',
@@ -197,7 +259,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             )));
           },
           child: _buildSupplyCard(
-            tagText: 'Today', 
+            tagText: 'Gas', 
             title: 'Today\'s\nUsage',
             value: gasTotal.toStringAsFixed(2),
             unit: ' m³',
@@ -395,7 +457,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ],
                     ),
                   ),
-                  Icon(Icons.info_outline, color: const Color(0xFF203DA3).withOpacity(0.5), size: 22),
+                  GestureDetector(
+                    onTap: () {
+                      _showInfoBottomSheet(context, tagText);
+                    },
+                    child: Icon(Icons.info_outline, color: const Color(0xFF203DA3).withOpacity(0.5), size: 22),
+                  ),
                 ],
               ),
               

@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+// Necesario para copiar al portapapeles
+import 'package:flutter/services.dart'; 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../logic/auth/auth_bloc.dart';
+import 'feedback_screen.dart';
+import 'personal_info_screen.dart'; 
+import 'settings_screen.dart';
+import 'about_screen.dart';
+
 import '../../logic/profile/profile_cubit.dart';
 
 class AccountScreen extends StatelessWidget {
@@ -10,92 +16,175 @@ class AccountScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFE5EDFC), 
+      backgroundColor: const Color(0xFFE5EDFC),
       body: SafeArea(
-        child: Column(
-          children: [
-            ShaderMask(
-                      blendMode: BlendMode.srcIn,
-                      shaderCallback: (Rect bounds) {
-                        return const LinearGradient(
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                          colors: [Color(0xFF71B9FD), Color(0xFFBDB2FF)],
-                        ).createShader(bounds);
-                      },
-                      child: const Text(
-                        'Account',
-                        style: TextStyle(fontSize: 42, fontWeight: FontWeight.w800, color: Colors.white),
-                      ),
-                    ),
-            
-            const SizedBox(height: 20),
+        child: BlocBuilder<ProfileCubit, ProfileState>(
+          builder: (context, state) {
+            if (state is ProfileLoading || state is ProfileInitial) {
+              return const Center(child: CircularProgressIndicator(color: Color(0xFF71B9FD)));
+            }
 
-            // El bloque del perfil conectado a Supabase
-            BlocBuilder<ProfileCubit, ProfileState>(
-              builder: (context, state) {
-                if (state is ProfileLoading || state is ProfileInitial) {
-                  return const Center(child: CircularProgressIndicator(color: Color(0xFF71B9FD)));
-                }
+            if (state is ProfileError) {
+              return Center(child: Text('Error: ${state.message}'));
+            }
 
-                if (state is ProfileError) {
-                  return Center(child: Text('Error: ${state.message}'));
-                }
-
-                if (state is ProfileLoaded) {
-                  return Column(
+            if (state is ProfileLoaded) {
+              final profile = state.profile;
+              
+              return ListView(
+                padding: const EdgeInsets.all(24.0),
+                children: [
+                  // Cabecera del perfil
+                  Row(
                     children: [
                       const CircleAvatar(
-                        radius: 50,
+                        radius: 40,
                         backgroundColor: Color(0xFF71B9FD),
-                        child: Icon(Icons.person_outline, size: 50, color: Colors.white),
+                        child: Icon(Icons.person_outline, size: 40, color: Colors.white),
                       ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        "Mi Perfil", // En el futuro añadiré el campo 'name' 
-                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Color(0xFF1E293B)),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        state.profile.email, // Traemos el email real de la base de datos
-                        style: const TextStyle(fontSize: 16, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              profile.fullName?.isNotEmpty == true ? profile.fullName! : "Personal Profile",
+                              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF203DA3)),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              profile.email,
+                              style: const TextStyle(fontSize: 14, color: Color(0xFF203DA3), fontWeight: FontWeight.w600),
+                            ),
+                            if (profile.phoneNumber?.isNotEmpty == true) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                profile.phoneNumber!,
+                                style: const TextStyle(fontSize: 14, color: Color(0xFF203DA3), fontWeight: FontWeight.w600),
+                              ),
+                            ]
+                          ],
+                        ),
                       ),
                     ],
-                  );
-                }
-                return const SizedBox.shrink();
-              },
-            ),
-
-            const Spacer(),
-
-            // Botón para cerrar sesión
-            Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    // Lanzamos el evento que se encarga de borrar el token y el router nos echará a la pantalla de Login.
-                    context.read<AuthBloc>().add(AuthLogoutRequested());
-                  },
-                  icon: const Icon(Icons.logout, color: Color(0xFFE57373)),
-                  label: const Text(
-                    'Sign Out',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFFE57373)),
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                    elevation: 0,
+                  
+                  const SizedBox(height: 32),
+
+                  _buildMenuCard(
+                    icon: Icons.person_outline,
+                    title: 'Personal Info',
+                    onTap: () {
+                      // Usamos BlocProvider.value para pasar el Cubit a la nueva pantalla
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                        builder: (_) => BlocProvider.value(
+                          value: context.read<ProfileCubit>(),
+                          child: const PersonalInfoScreen(),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildMenuCard(
+                    icon: Icons.cloud_download_outlined,
+                    title: 'Updates',
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Las actualizaciones están al día.'),
+                          backgroundColor: Color(0xFF71B9FD),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                  ),
+                  _buildMenuCard(
+                    icon: Icons.ios_share,
+                    title: 'Share App',
+                    onTap: () async {
+                      await Clipboard.setData(const ClipboardData(text: 'www.homeflow.com'));
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Enlace copiado al portapapeles'),
+                            backgroundColor: Color(0xFFBDB2FF),
+                            behavior: SnackBarBehavior.floating,
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                  _buildMenuCard(
+                    icon: Icons.settings_outlined,
+                    title: 'Settings',
+                    onTap: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const SettingsScreen()));
+                    },
+                  ),
+                  _buildMenuCard(
+                    icon: Icons.info_outline,
+                    title: 'About',
+                    onTap: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const AboutScreen()));
+                    },
+                  ),
+                  _buildMenuCard(
+                    icon: Icons.sentiment_satisfied_alt,
+                    title: 'Send Feedback',
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const FeedbackScreen()),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: 100), // Espacio para el BottomNavigationBar
+                ],
+              );
+            }
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    );
+  }
+
+  // Helper para construir cada tarjeta del menú de forma idéntica a tu diseño
+  Widget _buildMenuCard({required IconData icon, required String title, required VoidCallback onTap}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4)),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: Row(
+              children: [
+                Icon(icon, color: const Color(0xFF203DA3), size: 28),
+                const SizedBox(width: 20),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF203DA3),
                   ),
                 ),
-              ),
+              ],
             ),
-            
-            const SizedBox(height: 100), // Espacio para el menú inferior
-          ],
+          ),
         ),
       ),
     );

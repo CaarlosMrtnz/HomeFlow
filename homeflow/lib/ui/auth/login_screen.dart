@@ -8,7 +8,6 @@ class LoginScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Inyectamos el Cubit localmente solo para esta pantalla
     return BlocProvider(
       create: (context) => LoginCubit(authRepository: context.read<AuthRepository>()),
       child: const _LoginForm(),
@@ -26,7 +25,7 @@ class _LoginForm extends StatefulWidget {
 class _LoginFormState extends State<_LoginForm> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isLoginMode = true; // Controla si estamos en Login o Registro
+  bool _isLoginMode = true;
 
   @override
   void dispose() {
@@ -35,23 +34,63 @@ class _LoginFormState extends State<_LoginForm> {
     super.dispose();
   }
 
+  // Traductor de errores
+  String _getFriendlyErrorMessage(String rawError) {
+    final errorLower = rawError.toLowerCase();
+    
+    if (errorLower.contains('invalid login credentials')) {
+      return 'Incorrect email or password.';
+    } else if (errorLower.contains('user already registered') || errorLower.contains('already exists')) {
+      return 'An account with this email already exists.';
+    } else if (errorLower.contains('rate limit')) {
+      return 'Too many attempts. Please try again later.';
+    } else if (errorLower.contains('socketexception') || errorLower.contains('network') || errorLower.contains('host lookup')) {
+      return 'Network error. Please check your internet connection.';
+    } else if (errorLower.contains('password should be at least')) {
+      return 'Password must be at least 6 characters long.';
+    }
+    
+    // Por si es un error que no tenemos mapeado
+    return 'An unexpected error occurred. Please try again.';
+  }
+
   void _submit(BuildContext context) {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
+    // Validación en el frontend
     if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, rellena todos los campos')),
-      );
+      _showErrorSnackBar(context, 'Please fill in all fields.');
+      return;
+    }
+    
+    if (!email.contains('@') || !email.contains('.')) {
+      _showErrorSnackBar(context, 'Please enter a valid email address.');
       return;
     }
 
+    if (password.length < 6) {
+      _showErrorSnackBar(context, 'Password must be at least 6 characters long.');
+      return;
+    }
+ 
+    // Lamada al cubit
     final cubit = context.read<LoginCubit>();
     if (_isLoginMode) {
       cubit.signIn(email, password);
     } else {
       cubit.signUp(email, password);
     }
+  }
+
+  void _showErrorSnackBar(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: const TextStyle(fontWeight: FontWeight.w600)),
+        backgroundColor: const Color(0xFFE57373),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   @override
@@ -65,15 +104,10 @@ class _LoginFormState extends State<_LoginForm> {
             child: BlocConsumer<LoginCubit, LoginState>(
               listener: (context, state) {
                 if (state is LoginFailure) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(state.error.replaceAll('AuthException', 'Error')),
-                      backgroundColor: Colors.redAccent,
-                    ),
-                  );
+                  // Pasamos el error por nuestro traductor antes de mostrarlo
+                  final friendlyMessage = _getFriendlyErrorMessage(state.error);
+                  _showErrorSnackBar(context, friendlyMessage);
                 } else if (state is LoginSuccess) {
-                  // Si el login/registro es correcto, navegamos al Dashboard.
-                  // (El AuthBloc global también se enterará por detrás y guardará la sesión)
                   Navigator.of(context).pushReplacementNamed('/home');
                 }
               },
@@ -102,7 +136,6 @@ class _LoginFormState extends State<_LoginForm> {
                     ),
                     const SizedBox(height: 48),
 
-                    // Tarjeta del formulario
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
@@ -114,7 +147,6 @@ class _LoginFormState extends State<_LoginForm> {
                       ),
                       child: Column(
                         children: [
-                          // Campo email
                           TextField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
@@ -128,8 +160,6 @@ class _LoginFormState extends State<_LoginForm> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          
-                          // Campo contraseña
                           TextField(
                             controller: _passwordController,
                             obscureText: true,
@@ -144,7 +174,6 @@ class _LoginFormState extends State<_LoginForm> {
                           ),
                           const SizedBox(height: 32),
 
-                          // Botón principal
                           SizedBox(
                             width: double.infinity,
                             height: 56,
@@ -168,7 +197,6 @@ class _LoginFormState extends State<_LoginForm> {
                     ),
                     const SizedBox(height: 24),
 
-                    // Selector de modo
                     TextButton(
                       onPressed: () {
                         setState(() {

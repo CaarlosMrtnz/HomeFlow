@@ -26,4 +26,21 @@ class ProfileRepository {
       throw Exception('Error fetching profile: $e');
     }
   }
+
+  Future<void> updateProfile({String? fullName, String? phoneNumber}) async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) throw Exception('No hay sesión activa.');
+
+      // Solo enviamos los campos que no sean nulos para no machacar datos sin querer
+      final updates = <String, dynamic>{};
+      if (fullName != null) updates['full_name'] = fullName;
+      if (phoneNumber != null) updates['phone_number'] = phoneNumber;
+
+      await _supabase.from('profiles').update(updates).eq('id', userId);
+    } catch (e) {
+      throw Exception('Error updating profile: $e');
+    }
+  }
+
 }

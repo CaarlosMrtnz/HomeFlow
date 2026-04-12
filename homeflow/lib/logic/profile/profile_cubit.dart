@@ -30,4 +30,13 @@ class ProfileCubit extends Cubit<ProfileState> {
       emit(ProfileError(e.toString()));
     }
   }
+
+  Future<void> updateProfile(String fullName, String phoneNumber) async {
+    try {
+      await _repository.updateProfile(fullName: fullName, phoneNumber: phoneNumber);
+      await loadProfile(); // Si va bien, recargamos y emitimos el nuevo perfil
+    } catch (e) {
+      rethrow; // Lanzamos el error para que lo capture el botón en la UI
+    }
+  }
 }

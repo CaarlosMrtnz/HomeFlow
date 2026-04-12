@@ -27,7 +27,8 @@ device_states = {}
 
 def get_devices():
     try:
-        response = supabase.table('devices').select("*").execute()
+        # Usamos .or_ para filtrar: o el user_id es null (globales) o es el test_user (propios)
+        response = supabase.table('devices').select("*").or_(f"user_id.is.null,user_id.eq.{test_user}").execute()
         return response.data
     except Exception as e:
         print(f"Error al obtener dispositivos: {e}")
@@ -81,7 +82,7 @@ def simulate_usage(devices):
             "device_id": device_id,
             "value": value
         }).execute()
-        
+         
         if estado_str != "Continua apagado":
             print(f"[{time.strftime('%X')}] {device_name} {estado_str} ({value} unidades).")
     except Exception as e:
@@ -89,15 +90,17 @@ def simulate_usage(devices):
 
 if __name__ == "__main__":
     print("Iniciando simulador de HomeFlow...")
-    available_devices = get_devices()
     
-    if not available_devices:
-        print("ERROR: No se han encontrado electrodomésticos en la tabla 'devices'.")
-    else:
-        try:
-            while True:
+    try:
+        while True:
+            available_devices = get_devices()
+            
+            if not available_devices:
+                print("ERROR: No se han encontrado electrodomésticos para este usuario.")
+            else:
                 simulate_usage(available_devices)
-                # Loop de 5 segundos para estresar la capa del frontend en tiempo real y asegurar que los BLoCs aguantan la ráfaga de redibujados.
-                time.sleep(5)
-        except KeyboardInterrupt:
-            print("\nSimulador detenido.")
+                
+            # Loop de 5 segundos
+            time.sleep(5)
+    except KeyboardInterrupt:
+        print("\nSimulador detenido.")

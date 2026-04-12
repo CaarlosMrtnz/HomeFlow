@@ -18,15 +18,17 @@ final class DashboardLoading extends DashboardState {}
 final class DashboardLoaded extends DashboardState {
   final List<Reading> readings; // Para las tarjetas en tiempo real
   final List<dynamic> weeklySummary; 
+  final List<dynamic> devices;
   
   const DashboardLoaded({
     required this.readings,
     required this.weeklySummary,
+    required this.devices,
   });
 
   // Pasamos ambas listas a props para que Equatable sepa cuándo repintar la pantalla
   @override
-  List<Object> get props => [readings, weeklySummary];
+  List<Object> get props => [readings, weeklySummary, devices];
 }
 
 // Estado en caso de fallo de la conexión con el repositorio o por una caída de internet.

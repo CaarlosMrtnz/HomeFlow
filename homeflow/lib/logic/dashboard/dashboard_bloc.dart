@@ -20,6 +20,8 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     // Función que maneja el evento de arranque
     on<StartListeningReadings>(_onStartListeningReadings);
     on<_OnReadingsUpdated>(_onReadingsUpdated);
+    on<AddDeviceRequested>(_onAddDeviceRequested);
+    on<DeleteDeviceRequested>(_onDeleteDeviceRequested);
   }
 
   Future<void> _onStartListeningReadings(
@@ -46,14 +48,65 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     Emitter<DashboardState> emit,
   ) async {
     try {
-      final weeklySummary = await _repository.getWeeklySummary();
+      // Lanzamos las tres peticiones en paralelo para que la app vuele
+      final results = await Future.wait([
+        _repository.getWeeklySummary(),
+        _repository.getDevices(), 
+      ]);
       
       emit(DashboardLoaded(
         readings: event.readings,
-        weeklySummary: weeklySummary,
+        weeklySummary: results[0] as List<dynamic>,
+        devices: results[1] as List<dynamic>,
       ));
     } catch (e) {
       emit(DashboardError(e.toString()));
+    }
+  }
+
+  // Maneja crear un dispositivo
+  Future<void> _onAddDeviceRequested(
+    AddDeviceRequested event,
+    Emitter<DashboardState> emit,
+  ) async {
+    if (state is DashboardLoaded) { // Solo si ya estamos en la pantalla principal
+      try {
+        await _repository.createDevice(event.name, event.supplyTypeId, event.iconName);
+        
+        final newDevices = await _repository.getDevices();
+        final currentState = state as DashboardLoaded;
+        
+        emit(DashboardLoaded(
+          readings: currentState.readings,
+          weeklySummary: currentState.weeklySummary,
+          devices: newDevices,
+        ));
+      } catch (e) {
+        emit(DashboardError(e.toString()));
+      }
+    }
+  }
+
+  // Maneja borrar un dispositivo
+  Future<void> _onDeleteDeviceRequested(
+    DeleteDeviceRequested event,
+    Emitter<DashboardState> emit,
+  ) async {
+    if (state is DashboardLoaded) {
+      try {
+        await _repository.deleteDevice(event.deviceId);
+        
+        final newDevices = await _repository.getDevices();
+        final currentState = state as DashboardLoaded;
+        
+        emit(DashboardLoaded(
+          readings: currentState.readings,
+          weeklySummary: currentState.weeklySummary,
+          devices: newDevices,
+        ));
+      } catch (e) {
+        emit(DashboardError(e.toString()));
+      }
     }
   }
 

@@ -17,11 +17,30 @@ class _InsightsScreenState extends State<InsightsScreen> {
 
   List<double> _getWeeklyData(List<dynamic> summaryData, int supplyId) {
     final List<double> weeklyTotals = List.filled(7, 0.0);
-    
+    final now = DateTime.now();
+
+    // Averiguamos cuántos días restar para llegar al Lunes a las 00:00:00
+    final monday = now.subtract(Duration(days: now.weekday - 1));
+    final startOfThisWeek = DateTime(monday.year, monday.month, monday.day);
+    // El fin de la semana es el Domingo a las 23:59:59
+    final endOfThisWeek = startOfThisWeek.add(const Duration(days: 6, hours: 23, minutes: 59, seconds: 59));
+
     for (var row in summaryData) {
-      if (row['supply_type_id'] == supplyId) {
-        int index = row['day_index'] as int;
-        weeklyTotals[index] = (row['total_value'] as num).toDouble(); 
+      if (row['supply_type_id'] == supplyId && row['day'] != null) {
+        try {
+          final date = DateTime.parse(row['day'].toString());
+          
+          // Solo pasa si pertenece a la semana actual
+          if (date.isAfter(startOfThisWeek.subtract(const Duration(seconds: 1))) && 
+              date.isBefore(endOfThisWeek.add(const Duration(seconds: 1)))) {
+            
+            int index = date.weekday - 1; 
+            double totalValue = (row['total_value'] as num?)?.toDouble() ?? 0.0;
+            weeklyTotals[index] += totalValue;
+          }
+        } catch (e) {
+          debugPrint('Error processing row in _getWeeklyData: $e');
+        }
       }
     }
     return weeklyTotals;

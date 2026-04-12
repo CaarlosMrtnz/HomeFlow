@@ -49,4 +49,46 @@ class DashboardRepository {
     return response;
   }
 
+  // Obtiene los dispositivos globales y los propios del usuario
+  Future<List<Map<String, dynamic>>> getDevices() async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) return [];
+
+    // La política RLS que creamos en Supabase ya filtra esto, 
+    // pero añadimos el filtro .or() en la llamada por doble seguridad y claridad.
+    final response = await _supabase
+        .from('devices')
+        .select()
+        .or('user_id.is.null,user_id.eq.$userId')
+        .order('id', ascending: true);
+        
+    return response;
+  }
+
+  /// Inserta un nuevo dispositivo personalizado
+  Future<void> createDevice(String name, int supplyTypeId, String iconName) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) throw Exception('Usuario no autenticado');
+
+    await _supabase.from('devices').insert({
+      'name': name,
+      'supply_type_id': supplyTypeId,
+      'user_id': userId, // Esto marca el dispositivo como "privado"
+      'icon_name': iconName,
+    });
+  }
+
+  // Elimina un dispositivo personalizado
+  Future<void> deleteDevice(int deviceId) async {
+    final userId = _supabase.auth.currentUser?.id;
+    if (userId == null) throw Exception('Usuario no autenticado');
+
+    // Doble validación: borra el ID exacto, pero solo si pertenece a este usuario
+    await _supabase
+        .from('devices')
+        .delete()
+        .eq('id', deviceId)
+        .eq('user_id', userId);
+  }
+
 }

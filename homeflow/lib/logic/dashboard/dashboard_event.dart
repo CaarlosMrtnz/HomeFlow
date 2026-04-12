@@ -20,3 +20,23 @@ class _OnReadingsUpdated extends DashboardEvent {
   @override
   List<Object> get props => [readings];
 }
+
+class AddDeviceRequested extends DashboardEvent {
+  final String name;
+  final int supplyTypeId;
+  final String iconName;
+
+  const AddDeviceRequested(this.name, this.supplyTypeId, this.iconName);
+
+  @override
+  List<Object> get props => [name, supplyTypeId, iconName];
+}
+
+class DeleteDeviceRequested extends DashboardEvent {
+  final int deviceId;
+
+  const DeleteDeviceRequested(this.deviceId);
+
+  @override
+  List<Object> get props => [deviceId];
+}

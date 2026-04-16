@@ -40,3 +40,8 @@ class DeleteDeviceRequested extends DashboardEvent {
   @override
   List<Object> get props => [deviceId];
 }
+
+class SignOutRequested extends DashboardEvent {
+  @override
+  List<Object> get props => [];
+}

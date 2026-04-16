@@ -18,56 +18,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   double _calculateTodayTotal(List<Reading> readings, int supplyId) {
     final now = DateTime.now();
-    final todayReadings = readings.where((r) => 
-      r.supplyTypeId == supplyId &&
-      r.createdAt.year == now.year &&
-      r.createdAt.month == now.month &&
-      r.createdAt.day == now.day
-    );
+    final todayReadings = readings.where((r) {
+      final localDate = r.createdAt.toLocal(); 
+      return r.supplyTypeId == supplyId &&
+             localDate.year == now.year &&
+             localDate.month == now.month &&
+             localDate.day == now.day;
+    });
     return todayReadings.fold(0.0, (sum, reading) => sum + reading.value);
   }
 
-  String _getDeviceName(int deviceId) {
-    switch (deviceId) {
-      case 1: return 'Lavadora';
-      case 2: return 'Lavavajillas';
-      case 3: return 'Frigorífico';
-      case 4: return 'Horno';
-      case 5: return 'Caldera';
-      default: return 'Dispositivo $deviceId';
-    }
-  }
-
-  IconData _getDeviceIcon(int deviceId) {
-    switch (deviceId) {
-      case 1: return Icons.local_laundry_service;
-      case 2: return Icons.kitchen;
-      case 3: return Icons.kitchen;
-      case 4: return Icons.microwave;
-      case 5: return Icons.hvac;
+  IconData _getIconFromString(String iconName) {
+    switch (iconName) {
+      case 'lightbulb': return Icons.lightbulb;
+      case 'water_drop': return Icons.water_drop;
+      case 'thermostat': return Icons.thermostat;
+      case 'bathtub': return Icons.bathtub;
+      case 'kitchen': return Icons.kitchen;
+      case 'local_laundry_service': return Icons.local_laundry_service;
+      case 'microwave': return Icons.microwave;
+      case 'hvac': return Icons.hvac;
       default: return Icons.device_unknown;
-    }
-  }
-
-  Color _getThemeColor(int deviceId) {
-    switch (deviceId) {
-      case 1:
-      case 2: return const Color(0xFF71B9FD); 
-      case 3:
-      case 4: return const Color(0xFFFFE957); 
-      case 5: return const Color(0xFFBDB2FF); 
-      default: return Colors.grey;
-    }
-  }
-
-  String _getUnit(int deviceId) {
-    switch (deviceId) {
-      case 1:
-      case 2: return 'L';
-      case 3:
-      case 4: return 'kWh';
-      case 5: return 'm³';
-      default: return '';
     }
   }
 
@@ -155,7 +126,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               final dashboardBloc = context.read<DashboardBloc>();
 
               return _isSearching 
-                  ? _buildSearchMode(state.readings)
+                  ? _buildSearchMode(state.readings, state.devices)
                   : _buildNormalDashboard(elecTotal, waterTotal, gasTotal, dashboardBloc);
             }
             return const SizedBox.shrink();
@@ -169,7 +140,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
       children: [
-        // Cabecera
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -187,30 +157,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 style: TextStyle(fontSize: 32, fontWeight: FontWeight.w700, color: Colors.white),
               ),
             ),
-            const Icon(Icons.more_horiz, color: Color(0xFF53A1C2), size: 32),
           ],
         ),
         const SizedBox(height: 24),
 
-        // Barra de búsqueda inferior 
         Container(
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(30),
           ),
           child: TextField(
-            readOnly: true, // Evita que se abra el teclado aquí abajo
-            onTap: () => setState(() => _isSearching = true), // Cambia al modo búsqueda
+            readOnly: true,
+            onTap: () => setState(() => _isSearching = true), 
             decoration: const InputDecoration(
               border: InputBorder.none,
               contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-              suffixIcon: Icon(Icons.search, color: Color(0xFF71B9FD)), // Lupa a la derecha
+              suffixIcon: Icon(Icons.search, color: Color(0xFF71B9FD)), 
             ),
           ),
         ),
         const SizedBox(height: 24),
         
-        // Tarjeta 1: Electricidad
         GestureDetector(
           onTap: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => BlocProvider.value(
@@ -230,7 +197,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         const SizedBox(height: 16),
         
-        // Tarjeta 2: Agua
         GestureDetector(
           onTap: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => BlocProvider.value(
@@ -250,7 +216,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         const SizedBox(height: 16),
         
-        // Tarjeta 3: Gas
         GestureDetector(
           onTap: () {
             Navigator.push(context, MaterialPageRoute(builder: (context) => BlocProvider.value(
@@ -273,28 +238,31 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildSearchMode(List<Reading> allReadings) {
+  Widget _buildSearchMode(List<Reading> allReadings, List<dynamic> allDevices) {
     final now = DateTime.now();
+    
+    // Lecturas de hoy
     final todayReadings = allReadings.where((r) => 
-      r.createdAt.year == now.year && r.createdAt.month == now.month && r.createdAt.day == now.day
-    );
+      r.createdAt.year == now.year && 
+      r.createdAt.month == now.month && 
+      r.createdAt.day == now.day
+    ).toList();
 
-    final Map<int, double> allDeviceTotals = {1: 0.0, 2: 0.0, 3: 0.0, 4: 0.0, 5: 0.0};
+    // Mapea los totales de consumo de hoy por ID de dispositivo
+    final Map<int, double> todayTotals = {};
     for (var r in todayReadings) {
-      if (allDeviceTotals.containsKey(r.deviceId)) {
-        allDeviceTotals[r.deviceId] = allDeviceTotals[r.deviceId]! + r.value;
-      }
+      todayTotals[r.deviceId] = (todayTotals[r.deviceId] ?? 0.0) + r.value;
     }
 
+    // Filtra todo el catálogo de dispositivos por la búsqueda
     final query = _searchController.text.toLowerCase();
-    final filteredDevices = allDeviceTotals.keys.where((id) {
-      final name = _getDeviceName(id).toLowerCase();
-      return name.contains(query);
+    final filteredDevices = allDevices.where((device) {
+      final realDeviceName = device['name'].toString().toLowerCase();
+      return realDeviceName.contains(query);
     }).toList();
 
     return Column(
       children: [
-        // Cabecera de búsqueda con botón Atrás
         Padding(
           padding: const EdgeInsets.fromLTRB(8, 24, 24, 16),
           child: Row(
@@ -314,7 +282,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(30)),
                   child: TextField(
                     controller: _searchController,
-                    autofocus: true, // Abre el teclado automáticamente
+                    autofocus: true,
                     onChanged: (value) => setState(() {}),
                     decoration: const InputDecoration(
                       hintText: 'Search devices...',
@@ -330,7 +298,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
 
-        // Resultados
         Expanded(
           child: filteredDevices.isEmpty
               ? const Center(child: Text('No devices found.', style: TextStyle(color: Colors.grey)))
@@ -338,9 +305,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 24.0),
                   itemCount: filteredDevices.length,
                   itemBuilder: (context, index) {
-                    final deviceId = filteredDevices[index];
-                    final totalValue = allDeviceTotals[deviceId]!;
-                    final themeColor = _getThemeColor(deviceId);
+                    final device = filteredDevices[index];
+                    
+                    final deviceId = device['id'] as int;
+                    final deviceName = device['name'].toString();
+                    final supplyTypeId = device['supply_type_id'] as int;
+                    final deviceIconName = device['icon_name'].toString();
+
+                    // Si hoy tiene lecturas, sale el total acumulado; si no, 0.0
+                    final totalValue = todayTotals[deviceId] ?? 0.0; 
+                    
+                    // Colores según el tipo de suministro
+                    final themeColor = supplyTypeId == 1 ? const Color(0xFFFFE957) : 
+                                       supplyTypeId == 2 ? const Color(0xFF71B9FD) : 
+                                       const Color(0xFFBDB2FF);
+                                       
+                    final deviceIcon = _getIconFromString(deviceIconName);
+                                       
+                    final unit = supplyTypeId == 1 ? 'kWh' : 
+                                 supplyTypeId == 2 ? 'L' : 'm³';
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 16),
@@ -355,20 +338,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(color: themeColor.withOpacity(0.15), shape: BoxShape.circle),
-                            child: Icon(_getDeviceIcon(deviceId), color: themeColor),
+                            child: Icon(deviceIcon, color: themeColor),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(_getDeviceName(deviceId), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: Color(0xFF1E293B))),
+                                Text(deviceName, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16, color: Color(0xFF1E293B))),
                                 const SizedBox(height: 4),
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                   decoration: BoxDecoration(color: themeColor.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
                                   child: Text(
-                                    '${totalValue.toStringAsFixed(2)} ${_getUnit(deviceId)}',
+                                    '${totalValue.toStringAsFixed(2)} $unit',
                                     style: TextStyle(
                                       color: themeColor == const Color(0xFFFFE957) ? const Color(0xFFD4C02E) : themeColor, 
                                       fontWeight: FontWeight.w800, fontSize: 12
@@ -428,7 +411,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                // ... Todo el código de tu Row con el Tag "Today"
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(

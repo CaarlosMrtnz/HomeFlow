@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:homeflow/core/models/reading.dart';
 
 import '../../logic/dashboard/dashboard_bloc.dart';
 
@@ -15,7 +16,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
   // 0 = General, 1 = Luz, 2 = Agua, 3 = Gas
   int _selectedFilter = 0;
 
-  List<double> _getWeeklyData(List<dynamic> summaryData, int supplyId) {
+  List<double> _getWeeklyData(List<Reading> liveReadings, int supplyId) {
     final List<double> weeklyTotals = List.filled(7, 0.0);
     final now = DateTime.now();
 
@@ -25,21 +26,16 @@ class _InsightsScreenState extends State<InsightsScreen> {
     // El fin de la semana es el Domingo a las 23:59:59
     final endOfThisWeek = startOfThisWeek.add(const Duration(days: 6, hours: 23, minutes: 59, seconds: 59));
 
-    for (var row in summaryData) {
-      if (row['supply_type_id'] == supplyId && row['day'] != null) {
-        try {
-          final date = DateTime.parse(row['day'].toString());
+    for (var reading in liveReadings) {
+      if (reading.supplyTypeId == supplyId) {
+        final localDate = reading.createdAt.toLocal();
+
+        // Solo pasa si pertenece a la semana actual
+        if (localDate.isAfter(startOfThisWeek.subtract(const Duration(seconds: 1))) && 
+            localDate.isBefore(endOfThisWeek.add(const Duration(seconds: 1)))) {
           
-          // Solo pasa si pertenece a la semana actual
-          if (date.isAfter(startOfThisWeek.subtract(const Duration(seconds: 1))) && 
-              date.isBefore(endOfThisWeek.add(const Duration(seconds: 1)))) {
-            
-            int index = date.weekday - 1; 
-            double totalValue = (row['total_value'] as num?)?.toDouble() ?? 0.0;
-            weeklyTotals[index] += totalValue;
-          }
-        } catch (e) {
-          debugPrint('Error processing row in _getWeeklyData: $e');
+          int index = localDate.weekday - 1; 
+          weeklyTotals[index] += reading.value;
         }
       }
     }
@@ -58,9 +54,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
             }
 
             if (state is DashboardLoaded) {
-              final elecData = _getWeeklyData(state.weeklySummary, 1);
-              final waterData = _getWeeklyData(state.weeklySummary, 2);
-              final gasData = _getWeeklyData(state.weeklySummary, 3);
+              final elecData = _getWeeklyData(state.readings, 1);
+              final waterData = _getWeeklyData(state.readings, 2);
+              final gasData = _getWeeklyData(state.readings, 3);
 
               return Padding(
                 padding: const EdgeInsets.all(24.0),
@@ -91,7 +87,6 @@ class _InsightsScreenState extends State<InsightsScreen> {
                           ),
                         ),
                       ),
-                        Icon(Icons.more_horiz, color: Color(0xFF53A1C2), size: 32),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -162,6 +157,9 @@ class _InsightsScreenState extends State<InsightsScreen> {
   Widget _buildBarChart(List<double> elecData, List<double> waterData, List<double> gasData) {
     return BarChart(
       BarChartData(
+        barTouchData: BarTouchData(
+          enabled: false, 
+        ),
         alignment: BarChartAlignment.spaceAround,
         borderData: FlBorderData(show: false),
         gridData: FlGridData(

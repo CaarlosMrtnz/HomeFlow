@@ -54,14 +54,7 @@ class DashboardRepository {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return [];
 
-    // La política RLS que creamos en Supabase ya filtra esto, 
-    // pero añadimos el filtro .or() en la llamada por doble seguridad y claridad.
-    final response = await _supabase
-        .from('devices')
-        .select()
-        .or('user_id.is.null,user_id.eq.$userId')
-        .order('id', ascending: true);
-        
+    final response = await _supabase.from('devices').select('*');
     return response;
   }
 
@@ -73,7 +66,7 @@ class DashboardRepository {
     await _supabase.from('devices').insert({
       'name': name,
       'supply_type_id': supplyTypeId,
-      'user_id': userId, // Esto marca el dispositivo como "privado"
+      'user_id': userId, 
       'icon_name': iconName,
     });
   }
@@ -91,4 +84,7 @@ class DashboardRepository {
         .eq('user_id', userId);
   }
 
+  Future<void> signOut() async {
+    await _supabase.auth.signOut();
+  }
 }

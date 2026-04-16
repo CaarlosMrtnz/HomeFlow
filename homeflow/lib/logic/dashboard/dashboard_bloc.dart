@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:supabase_flutter/supabase_flutter.dart'; // Asegúrate de tener este import
 
 import '../../core/models/reading.dart';
 import '../../data/dashboard_repository.dart'; 
@@ -9,96 +10,118 @@ part 'dashboard_event.dart';
 part 'dashboard_state.dart';
 
 class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
-  // Referencia al repositorio que gestiona la conexión con Supabase
   final DashboardRepository _repository;
-  // Guardamos la suscripción para poder cancelarla si la app se cierra
-  StreamSubscription<List<Reading>>? _readingsSubscription;
+  
+  // Instancia de Supabase y Caché en memoria RAM
+  final _supabase = Supabase.instance.client;
+  List<Map<String, dynamic>> _devicesCache = [];
 
   DashboardBloc({required DashboardRepository repository}) 
       : _repository = repository,
         super(DashboardInitial()) {
-    // Función que maneja el evento de arranque
     on<StartListeningReadings>(_onStartListeningReadings);
-    on<_OnReadingsUpdated>(_onReadingsUpdated);
     on<AddDeviceRequested>(_onAddDeviceRequested);
     on<DeleteDeviceRequested>(_onDeleteDeviceRequested);
+    on<SignOutRequested>(_onSignOutRequested);
+  }
+
+  // Función interna para refrescar la memoria
+  Future<void> _refreshDeviceCache() async {
+    try {
+      final response = await _supabase.from('devices').select('id, name, icon_name');
+      _devicesCache = List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      print('Error recargando caché de dispositivos: $e');
+    }
   }
 
   Future<void> _onStartListeningReadings(
     StartListeningReadings event, 
     Emitter<DashboardState> emit,
   ) async {
-    // Si ya había una suscripción abierta, la cerramos por seguridad
-    await _readingsSubscription?.cancel();
+    // Llenado de la caché al arrancar
+    await _refreshDeviceCache();
     
-    // Nos suscribimos al WebSocket de forma manual
-    _readingsSubscription = _repository.getRealtimeReadings().listen(
-      (readings) {
-        // Cuando llega un dato, lanzamos el evento interno
-        add(_OnReadingsUpdated(readings));
+    // Obtenemos los datos iniciales
+    final initialSummary = await _repository.getWeeklySummary();
+    final initialDevices = await _repository.getDevices();
+
+    await emit.forEach(
+      _supabase.from('readings').stream(primaryKey: ['id']),
+      onData: (List<Map<String, dynamic>> rawReadings) {
+        
+        List<dynamic> activeDevices = initialDevices;
+        List<dynamic> activeSummary = initialSummary;
+        
+        if (state is DashboardLoaded) {
+          activeDevices = (state as DashboardLoaded).devices;
+          activeSummary = (state as DashboardLoaded).weeklySummary;
+        }
+        final List<Reading> lecturasEnriquecidas = rawReadings.map((json) {
+          final deviceId = json['device_id'];
+          
+          final deviceInfo = _devicesCache.firstWhere(
+            (d) => d['id'].toString() == deviceId.toString(), 
+            orElse: () => {'name': 'Unknown Device', 'icon_name': 'device_unknown'}
+          );
+
+          json['devices'] = {
+            'name': deviceInfo['name'],
+            'icon_name': deviceInfo['icon_name'],
+          };
+
+          return Reading.fromJson(json);
+        }).toList();
+
+        // Estado con las lecturas nuevas y las listas actualizadas
+        return DashboardLoaded(
+          readings: lecturasEnriquecidas,
+          weeklySummary: activeSummary,
+          devices: activeDevices,
+        );
       },
-      onError: (error) {
-        // emit() aquí dentro daría error porque no estamos en una función on<Event>, así que lo correcto sería despachar un evento de error, pero para no complicarlo se queda así.
-      }
+      onError: (error, stackTrace) => DashboardError(error.toString()),
     );
   }
 
-  Future<void> _onReadingsUpdated(
-    _OnReadingsUpdated event,
-    Emitter<DashboardState> emit,
-  ) async {
-    try {
-      // Lanzamos las tres peticiones en paralelo para que la app vuele
-      final results = await Future.wait([
-        _repository.getWeeklySummary(),
-        _repository.getDevices(), 
-      ]);
-      
-      emit(DashboardLoaded(
-        readings: event.readings,
-        weeklySummary: results[0] as List<dynamic>,
-        devices: results[1] as List<dynamic>,
-      ));
-    } catch (e) {
-      emit(DashboardError(e.toString()));
-    }
-  }
-
-  // Maneja crear un dispositivo
   Future<void> _onAddDeviceRequested(
     AddDeviceRequested event,
     Emitter<DashboardState> emit,
   ) async {
-    if (state is DashboardLoaded) { // Solo si ya estamos en la pantalla principal
+    if (state is DashboardLoaded) {
       try {
+        // Solo llamamos al repositorio. Él ya se encarga de hacer el insert en Supabase.
         await _repository.createDevice(event.name, event.supplyTypeId, event.iconName);
         
         final newDevices = await _repository.getDevices();
         final currentState = state as DashboardLoaded;
         
+        // Refrescamos la caché para que el Stream reconozca al nuevo dispositivo
+        await _refreshDeviceCache();
+
         emit(DashboardLoaded(
           readings: currentState.readings,
           weeklySummary: currentState.weeklySummary,
           devices: newDevices,
         ));
+
       } catch (e) {
         emit(DashboardError(e.toString()));
       }
     }
   }
 
-  // Maneja borrar un dispositivo
-  Future<void> _onDeleteDeviceRequested(
-    DeleteDeviceRequested event,
-    Emitter<DashboardState> emit,
-  ) async {
+  Future<void> _onDeleteDeviceRequested(DeleteDeviceRequested event, Emitter<DashboardState> emit) async {
     if (state is DashboardLoaded) {
       try {
+        // Aquí le pasamos el ID que viene dentro del evento
         await _repository.deleteDevice(event.deviceId);
         
         final newDevices = await _repository.getDevices();
         final currentState = state as DashboardLoaded;
         
+        await _refreshDeviceCache();
+
         emit(DashboardLoaded(
           readings: currentState.readings,
           weeklySummary: currentState.weeklySummary,
@@ -110,10 +133,11 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
     }
   }
 
-  // Limpia la memoria cuando el BLoC muere
-  @override
-  Future<void> close() {
-    _readingsSubscription?.cancel();
-    return super.close();
+  Future<void> _onSignOutRequested(
+    SignOutRequested event,
+    Emitter<DashboardState> emit,
+  ) async {
+    await _repository.signOut();
+    emit(DashboardInitial()); 
   }
 }

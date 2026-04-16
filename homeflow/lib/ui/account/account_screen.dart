@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-// Necesario para copiar al portapapeles
 import 'package:flutter/services.dart'; 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -9,6 +8,7 @@ import 'settings_screen.dart';
 import 'about_screen.dart';
 
 import '../../logic/profile/profile_cubit.dart';
+import '../../logic/auth/auth_bloc.dart';
 
 class AccountScreen extends StatelessWidget {
   const AccountScreen({super.key});
@@ -75,7 +75,7 @@ class AccountScreen extends StatelessWidget {
                     icon: Icons.person_outline,
                     title: 'Personal Info',
                     onTap: () {
-                      // Usamos BlocProvider.value para pasar el Cubit a la nueva pantalla
+                      // BlocProvider.value para pasar el Cubit a la nueva pantalla
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -138,6 +138,14 @@ class AccountScreen extends StatelessWidget {
                         context,
                         MaterialPageRoute(builder: (_) => const FeedbackScreen()),
                       );
+                    },
+                  ),
+                  _buildMenuCard(
+                    icon: Icons.logout,
+                    title: 'Sign Out',
+                    onTap: () {
+                      // Dispara el evento al Bloc global para destruir la sesión
+                      context.read<AuthBloc>().add(AuthLogoutRequested());
                     },
                   ),
 

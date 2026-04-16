@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide AuthState;
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 // Repositorios
@@ -33,40 +33,60 @@ Future<void> main() async {
   runApp(const MainApp());
 }
 
-class MainApp extends StatelessWidget {
+// Con esto la llave no se destruya al redibujar
+class MainApp extends StatefulWidget {
   const MainApp({super.key});
 
   @override
+  State<MainApp> createState() => _MainAppState();
+}
+
+class _MainAppState extends State<MainApp> {
+  // LLave para controlar la navegación desde fuera
+  final _navigatorKey = GlobalKey<NavigatorState>();
+
+  @override
   Widget build(BuildContext context) {
-    // RepositoryProvider a nivel raíz. Así el LoginScreen siempre lo encontrará.
     return RepositoryProvider(
       create: (context) => AuthRepository(),
       child: BlocProvider(
         create: (context) => AuthBloc(
           authRepository: context.read<AuthRepository>(),
         )..add(AuthSubscriptionRequested()),
-        child: MaterialApp(
-          title: 'HomeFlow',
-          debugShowCheckedModeBanner: false,
-          theme: ThemeData(
-            useMaterial3: true,
-            fontFamily: 'Outfit', 
-            colorSchemeSeed: const Color(0xFFE5EDFC),
-            scaffoldBackgroundColor: const Color(0xFFE5EDFC),
-          ),
-          initialRoute: '/', 
-          routes: {
-            '/': (context) => const SplashScreen(),
-            '/login': (context) => const LoginScreen(),
-            '/home': (context) => MultiBlocProvider(
-              providers: [
-                BlocProvider(create: (context) => DashboardBloc(repository: DashboardRepository())..add(StartListeningReadings())),
-                BlocProvider(create: (context) => AlertsBloc(alertsRepository: AlertsRepository())..add(StartListeningAlerts())),
-                BlocProvider(create: (context) => ProfileCubit(repository: ProfileRepository())..loadProfile()),
-              ],
-              child: const MainScaffold(),
-            ), 
+        
+        // El BlocListener envuelve MaterialApp con el BlocListener
+        child: BlocListener<AuthBloc, AuthState>(
+          listener: (context, state) {
+            // Cuando el estado cambie a "desautenticado"
+            if (state is Unauthenticated) {
+              // Llave para borrar el historial de pantallas y forzar el Login
+              _navigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (route) => false);
+            }
           },
+          child: MaterialApp(
+            navigatorKey: _navigatorKey, // Conexión de la llave al MaterialApp
+            title: 'HomeFlow',
+            debugShowCheckedModeBanner: false,
+            theme: ThemeData(
+              useMaterial3: true,
+              fontFamily: 'Outfit', 
+              colorSchemeSeed: const Color(0xFFE5EDFC),
+              scaffoldBackgroundColor: const Color(0xFFE5EDFC),
+            ),
+            initialRoute: '/', 
+            routes: {
+              '/': (context) => const SplashScreen(),
+              '/login': (context) => const LoginScreen(),
+              '/home': (context) => MultiBlocProvider(
+                providers: [
+                  BlocProvider(create: (context) => DashboardBloc(repository: DashboardRepository())..add(StartListeningReadings())),
+                  BlocProvider(create: (context) => AlertsBloc(alertsRepository: AlertsRepository())..add(StartListeningAlerts())),
+                  BlocProvider(create: (context) => ProfileCubit(repository: ProfileRepository())..loadProfile()),
+                ],
+                child: const MainScaffold(),
+              ), 
+            },
+          ),
         ),
       ),
     );

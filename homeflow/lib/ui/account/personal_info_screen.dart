@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/models/profile.dart';
@@ -138,6 +139,10 @@ class _PersonalInfoFormState extends State<_PersonalInfoForm> {
                 TextField(
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
+                  inputFormatters: [
+                    // Expresión regular. Esto permite solo números del 0 al 9 y el símbolo '+'
+                    FilteringTextInputFormatter.allow(RegExp(r'[0-9+]')), 
+                  ],
                   decoration: InputDecoration(
                     labelText: 'Phone Number',
                     labelStyle: const TextStyle(color: Colors.grey),
@@ -205,33 +210,6 @@ class _PersonalInfoFormState extends State<_PersonalInfoForm> {
             ),
           ),
         ),
-
-        const SizedBox(height: 40),
-
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                Navigator.of(context).pop(); 
-                context.read<AuthBloc>().add(AuthLogoutRequested());
-              },
-              icon: const Icon(Icons.logout, color: Color(0xFFE57373)),
-              label: const Text(
-                'Sign Out',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFFE57373)),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                elevation: 0,
-              ),
-            ),
-          ),
-        ),
-        
         const SizedBox(height: 40), 
       ],
     );

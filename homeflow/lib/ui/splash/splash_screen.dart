@@ -18,18 +18,12 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocListener<AuthBloc, AuthState>(
-      listener: (context, state) async {
-
-        await Future.delayed(const Duration(seconds: 3));
-        if (!context.mounted) return;
-
-        if (state is Authenticated) {
-          Navigator.of(context).pushReplacementNamed('/home');
-        } else if (state is Unauthenticated) {
-          Navigator.of(context).pushReplacementNamed('/login');
-        }
-      },
-      child: Scaffold(
+      listener: (context, state) {
+      if (state is Authenticated) {
+        Navigator.of(context).pushReplacementNamed('/home');
+      } 
+    },
+    child: Scaffold(
         body: Container(
           width: double.infinity,
           decoration: const BoxDecoration(

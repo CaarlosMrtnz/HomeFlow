@@ -21,6 +21,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthSubscriptionRequested event,
     Emitter<AuthState> emit,
   ) async {
+    // Pausa por diseño para lucir el logo y eslogan de la 'marca' 
+    await Future.delayed(const Duration(milliseconds: 3500));
     // Comprobación inicial nada más abrir la app
     final currentUser = _authRepository.currentUser;
     if (currentUser != null) {

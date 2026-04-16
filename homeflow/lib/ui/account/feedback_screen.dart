@@ -32,12 +32,12 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       final userId = Supabase.instance.client.auth.currentUser?.id;
       if (userId == null) throw Exception('No active session.');
 
-      // Inserción directa en la base de datos
-      await Supabase.instance.client.from('feedback').insert({
+      // Inserta si es nuevo, actualiza si el user_id ya existe
+      await Supabase.instance.client.from('feedback').upsert({
         'user_id': userId,
-        'rating': _rating,
-        'description': _descriptionController.text.trim(),
-      });
+        'rating': _rating, // Coge las estrellas reales de la interfaz
+        'description': _descriptionController.text.trim(), // Coge el texto real
+      }, onConflict: 'user_id'); // Se fija en el usuario para saber si ya existe
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -136,7 +136,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                 ),
                 child: TextField(
                   controller: _descriptionController,
-                  maxLines: 6, // Lo hace alto como una caja de comentarios
+                  maxLines: 6, 
                   decoration: InputDecoration(
                     hintText: 'Tell us what you love or what could be better...',
                     hintStyle: const TextStyle(color: Colors.grey),

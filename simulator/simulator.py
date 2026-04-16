@@ -8,9 +8,8 @@ load_dotenv()
 
 url = os.environ.get('SPB_URL')
 key = os.environ.get('SPB_KEY')
-test_user = os.environ.get('TEST_USER_UUID')
 
-if not all([url, key, test_user]):
+if not all([url, key]):
     print("Error: Revisa tus variables de entorno en el archivo .env")
     exit()
 
@@ -25,10 +24,16 @@ range_config = {
 # Guardar el estado en memoria funciona para este script en local. 
 device_states = {}
 
-def get_devices():
+def get_devices(target_user=None):
     try:
-        # Usamos .or_ para filtrar: o el user_id es null (globales) o es el test_user (propios)
-        response = supabase.table('devices').select("*").or_(f"user_id.is.null,user_id.eq.{test_user}").execute()
+        # Todos los dispositivos que tengan dueño
+        query = supabase.table('devices').select("*").not_.is_('user_id', 'null')
+        
+        # Si recibe un usuario específico (Modo Demo), filtra la consulta
+        if target_user:
+            query = query.eq('user_id', target_user)
+            
+        response = query.execute()
         return response.data
     except Exception as e:
         print(f"Error al obtener dispositivos: {e}")
@@ -42,6 +47,7 @@ def simulate_usage(devices):
     device_id = device['id']
     supply_id = device['supply_type_id']
     device_name = device['name']
+    device_owner = device['user_id']
 
     if device_id not in device_states:
         device_states[device_id] = False
@@ -77,7 +83,7 @@ def simulate_usage(devices):
 
     try:
         supabase.table('readings').insert({
-            "user_id": test_user,
+            "user_id": device_owner,
             "supply_type_id": supply_id,
             "device_id": device_id,
             "value": value
@@ -88,19 +94,74 @@ def simulate_usage(devices):
     except Exception as e:
         print(f"Error al insertar lectura de {device_name}: {e}")
 
+def get_target_user():
+    print("\n🤖 Menú HomeFlow")
+    print("-"*40)
+    print("1. Modo multiuser")
+    print("2. Modo TFG")
+    
+    opcion = input("\nElige una opción (1 o 2): ")
+
+    if opcion == '2':
+        dev_response = supabase.table('devices').select('user_id, name').not_.is_('user_id', 'null').execute()
+        
+        email_map = {}
+        try:
+            users_response = supabase.auth.admin.list_users()
+            for user in users_response:
+                email_map[user.id] = user.email
+        except Exception as e:
+            print("Nota: No se pudieron obtener los emails. Verifica la clave service_role.")
+        
+        usuarios = {}
+        for d in dev_response.data:
+            uid = d['user_id']
+            if uid not in usuarios:
+                usuarios[uid] = []
+            usuarios[uid].append(d['name'])
+            
+        if not usuarios:
+            print("No hay dispositivos con dueño en la base de datos.")
+            return None
+            
+        print("\nCuentas detectadas en la Base de Datos:")
+        lista_uids = list(usuarios.keys())
+        for i, uid in enumerate(lista_uids):
+            aparatos = ", ".join(usuarios[uid][:3]) 
+            
+            identificador = email_map.get(uid, f"{uid[:8]}...")
+            
+            print(f"  [{i+1}] Cuenta: {identificador}")
+            
+        seleccion = input("\nIntroduce el número de la cuenta a elegir: ")
+        try:
+            indice = int(seleccion) - 1
+            if 0 <= indice < len(lista_uids):
+                uid_seleccionado = lista_uids[indice]
+                identificador_seleccionado = email_map.get(uid_seleccionado, f"{uid_seleccionado[:8]}...")
+                print(f"\n🚀 Iniciando simulador sobre la cuenta: {identificador_seleccionado}")
+                return uid_seleccionado
+        except ValueError:
+            pass
+        print("Selección no válida. Se usará el modo multiuser.")
+        
+    print("\n🌍 Iniciando en multiuser...")
+    return None
+
 if __name__ == "__main__":
-    print("Iniciando simulador de HomeFlow...")
+    # Modo que el user quiere usar
+    target_user = get_target_user()
     
     try:
         while True:
-            available_devices = get_devices()
+            # Dispositivos pedidos (le pasamos el filtro si existe)
+            available_devices = get_devices(target_user)
             
             if not available_devices:
-                print("ERROR: No se han encontrado electrodomésticos para este usuario.")
+                print("Esperando dispositivos...")
             else:
                 simulate_usage(available_devices)
                 
-            # Loop de 5 segundos
             time.sleep(5)
     except KeyboardInterrupt:
         print("\nSimulador detenido.")

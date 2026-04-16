@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:homeflow/core/utils/icon_helper.dart';
 import '../../logic/dashboard/dashboard_bloc.dart';
 
 class SupplyDetailScreen extends StatelessWidget {
@@ -15,29 +16,6 @@ class SupplyDetailScreen extends StatelessWidget {
     required this.themeColor,
     required this.unit,
   });
-
-  // Traductor del texto de la base de datos al Icono real
-  IconData _getIconData(String? iconName) {
-    if (iconName != null && iconName.isNotEmpty) {
-      switch (iconName) {
-        case 'ac_unit': return Icons.ac_unit;
-        case 'tv': return Icons.tv;
-        case 'lightbulb': return Icons.lightbulb_outline;
-        case 'router': return Icons.router;
-        case 'coffee': return Icons.coffee_maker_outlined;
-        case 'desktop': return Icons.desktop_windows_outlined;
-        case 'kitchen': return Icons.kitchen;
-        case 'water_drop': return Icons.water_drop_outlined;
-        case 'bathtub': return Icons.bathtub_outlined;
-        case 'fire': return Icons.local_fire_department_outlined;
-        case 'local_laundry_service': return Icons.local_laundry_service;
-        case 'thermostat': return Icons.thermostat;
-        default: return Icons.power_outlined;
-      }
-    }
-    // Si es un dispositivo antiguo sin icono o falla algo, icono genérico.
-    return Icons.power_outlined;
-  }
 
   void _showAddDeviceDialog(BuildContext context) {
     final controller = TextEditingController();
@@ -90,7 +68,7 @@ class SupplyDetailScreen extends StatelessWidget {
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
-                          _getIconData(iconName), 
+                          IconHelper.getIcon(iconName), 
                           color: isSelected ? Colors.white : Colors.grey,
                         ),
                       ),
@@ -194,7 +172,7 @@ class SupplyDetailScreen extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(color: themeColor.withOpacity(0.15), shape: BoxShape.circle),
-                              child: Icon(_getIconData(iconName), color: themeColor), 
+                              child: Icon(IconHelper.getIcon(iconName), color: themeColor), 
                             ),
                             const SizedBox(width: 16),
                             Expanded(

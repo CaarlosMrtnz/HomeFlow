@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:homeflow/ui/insights/supply_detail_screen.dart';
 
+import '../../core/utils/icon_helper.dart';
 import '../../logic/dashboard/dashboard_bloc.dart';
 import '../../core/models/reading.dart';
 
@@ -26,20 +27,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
              localDate.day == now.day;
     });
     return todayReadings.fold(0.0, (sum, reading) => sum + reading.value);
-  }
-
-  IconData _getIconFromString(String iconName) {
-    switch (iconName) {
-      case 'lightbulb': return Icons.lightbulb;
-      case 'water_drop': return Icons.water_drop;
-      case 'thermostat': return Icons.thermostat;
-      case 'bathtub': return Icons.bathtub;
-      case 'kitchen': return Icons.kitchen;
-      case 'local_laundry_service': return Icons.local_laundry_service;
-      case 'microwave': return Icons.microwave;
-      case 'hvac': return Icons.hvac;
-      default: return Icons.device_unknown;
-    }
   }
 
   void _showInfoBottomSheet(BuildContext context, String supplyType) {
@@ -320,7 +307,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                        supplyTypeId == 2 ? const Color(0xFF71B9FD) : 
                                        const Color(0xFFBDB2FF);
                                        
-                    final deviceIcon = _getIconFromString(deviceIconName);
+                    final deviceIcon = IconHelper.getIcon(deviceIconName);
                                        
                     final unit = supplyTypeId == 1 ? 'kWh' : 
                                  supplyTypeId == 2 ? 'L' : 'm³';

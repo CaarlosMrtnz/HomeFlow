@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:homeflow/core/utils/icon_helper.dart';
 import 'dart:async';
 
 import '../../logic/alerts/alerts_bloc.dart';
@@ -175,7 +176,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Widget _buildNotificationCard(BuildContext context, Alert alert) {
-    // Estados y colores
+    // Estados y colores del Badge (Leak, On, Off)
     Color badgeColor = Colors.grey;
     String badgeText = 'Unknown';
     
@@ -196,28 +197,27 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         break;
     }
 
-    // Iconos y fondos. Aquí es donde entra el ID numérico de Supabase
-    IconData deviceIcon = Icons.devices; 
+    // --- AQUÍ ESTÁ LA MAGIA ---
+    // 1. El icono lo decide el traductor unificado buscando el nombre exacto del electrodoméstico
+    IconData deviceIcon = IconHelper.getIcon(alert.deviceIconName); 
+    
+    // 2. El color de fondo lo decide el tipo de suministro
     Color iconBgColor = Colors.grey.shade200; 
-
-    // Mapeamos según el ID de la base de datos (1: Luz, 2: Agua, 3: Gas)
     switch (alert.supplyTypeId) {
       case 1: 
-        deviceIcon = Icons.bolt; 
         iconBgColor = const Color(0xFFFFE957); 
         break;
       case 2: 
-        deviceIcon = Icons.water_drop; 
         iconBgColor = const Color(0xFF71B9FD); 
         break;
       case 3: 
-        deviceIcon = Icons.local_fire_department; 
         iconBgColor = const Color(0xFFBDB2FF); 
         break;
       default:
         break;
     }
 
+    // Formateo de la hora
     final timeString = 
     "${alert.createdAt.hour.toString().padLeft(2, '0')}:${alert.createdAt.minute.toString().padLeft(2, '0')}:${alert.createdAt.second.toString().padLeft(2, '0')}";
 
@@ -249,11 +249,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               width: 52,
               height: 52,
               decoration: BoxDecoration(
-                color: iconBgColor,
+                color: iconBgColor, // El fondo amarillo, azul o morado
                 shape: BoxShape.circle, 
               ),
               child: Icon(
-                deviceIcon, 
+                deviceIcon, // El icono específico (lavadora, tv, horno...)
                 color: const Color(0xFF203DA3), 
                 size: 26,
               ),

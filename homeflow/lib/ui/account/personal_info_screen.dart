@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/models/profile.dart';
-import '../../logic/auth/auth_bloc.dart';
 import '../../logic/profile/profile_cubit.dart';
 
 class PersonalInfoScreen extends StatelessWidget {

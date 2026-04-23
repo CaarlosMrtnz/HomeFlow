@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 
+/// Utilidad estática para transformar los strings almacenados en la base de datos (Supabase) 
+/// en objetos [IconData] nativos de Material Design utilizables por la UI.
 class IconHelper {
+  /// Mapea un identificador de texto a su icono correspondiente.
+  /// Maneja de forma defensiva valores nulos o desconocidos para evitar excepciones de renderizado.
   // Al ser 'static', puedes llamarla desde cualquier parte de la app sin instanciar la clase
   static IconData getIcon(String? iconName) {
+    // Intercepta cadenas inválidas antes de evaluar el bloque condicional.
     if (iconName == null || iconName.isEmpty) return Icons.power_outlined;
 
     switch (iconName) {
@@ -25,4 +30,8 @@ class IconHelper {
       default: return Icons.device_unknown;
     }
   }
+
+  /// Constructor privado. Impide instanciar la clase, reforzando su diseño como un contenedor de funciones puras.
+  IconHelper._();
+
 }

@@ -7,9 +7,12 @@ import '../../data/auth_repository.dart';
 part 'auth_event.dart';
 part 'auth_state.dart';
 
+/// Máquina de estados que gestiona el ciclo de vida de la sesión del usuario.
+/// Conecta la capa de presentación con el flujo reactivo de Supabase.
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository _authRepository;
 
+  /// Inyecta el repositorio y registra los manejadores para los eventos de autenticación.
   AuthBloc({required AuthRepository authRepository})
       : _authRepository = authRepository,
         super(AuthInitial()) {
@@ -17,6 +20,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthLogoutRequested>(_onAuthLogoutRequested);
   }
 
+  /// Inicializa la validación de la sesión actual y abre la suscripción al canal de autenticación.
   Future<void> _onAuthSubscriptionRequested(
     AuthSubscriptionRequested event,
     Emitter<AuthState> emit,
@@ -48,6 +52,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
   }
 
+  /// Lanza la petición de destrucción de sesión al repositorio.
   Future<void> _onAuthLogoutRequested(
     AuthLogoutRequested event,
     Emitter<AuthState> emit,

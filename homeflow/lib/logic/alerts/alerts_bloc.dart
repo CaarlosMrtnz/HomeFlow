@@ -1,6 +1,8 @@
+import 'dart:developer' as developer;
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-// ¡OJO! Necesitas este import para conectarte al stream directamente
+// Importación explícita del cliente de Supabase para exponer el método de extensión .stream() requerido por los WebSockets.
 import 'package:supabase_flutter/supabase_flutter.dart'; 
 
 import '../../core/models/alert.dart';
@@ -9,13 +11,16 @@ import '../../data/alerts_repository.dart';
 part 'alerts_event.dart';
 part 'alerts_state.dart';
 
+/// Gestor de estado reactivo para las alertas del sistema.
+/// Mantiene la sincronización en tiempo real con Supabase e inyecta metadatos estáticos (iconos) para sortear la limitación de los JOINs en webSockets.
 class AlertsBloc extends Bloc<AlertsEvent, AlertsState> {
   final AlertsRepository _alertsRepository;
   
-  // 1. Instancia de Supabase y nuestra Caché en memoria RAM para los iconos
+  // Cliente de Supabase y caché en memoria para mitigar consultas N+1 al inyectar iconos en las alertas.
   final _supabase = Supabase.instance.client;
   List<Map<String, dynamic>> _devicesCache = [];
 
+  /// Inicializa el BLoC y enlaza los eventos de la UI con sus manejadores asíncronos.
   AlertsBloc({required AlertsRepository alertsRepository})
       : _alertsRepository = alertsRepository,
         super(AlertsInitial()) {
@@ -23,16 +28,23 @@ class AlertsBloc extends Bloc<AlertsEvent, AlertsState> {
     on<MarkAlertAsRead>(_onMarkAlertAsRead);
   }
 
-  // 2. Función privada para descargar los iconos una sola vez
+  // Poblamiento inicial de la caché de dispositivos. Precarga la relación id-icono para cruzarla sincrónicamente con el stream.
+  /// Extrae un mapa ligero de identificadores y nombres visuales de la tabla devices.
   Future<void> _refreshDeviceCache() async {
     try {
       final response = await _supabase.from('devices').select('id, icon_name');
       _devicesCache = List<Map<String, dynamic>>.from(response);
-    } catch (e) {
-      print('Error recargando caché de iconos en alertas: $e');
+    } catch (e, stackTrace) {
+        developer.log(
+          'Error recargando caché de iconos en alertas.',
+          name: 'AlertsBloc',
+          error: e,
+          stackTrace: stackTrace,
+        );
     }
   }
 
+  /// Abre el canal WebSocket y procesa el flujo entrante de alertas.
   Future<void> _onStartListeningAlerts(
     StartListeningAlerts event,
     Emitter<AlertsState> emit,
@@ -64,7 +76,7 @@ class AlertsBloc extends Bloc<AlertsEvent, AlertsState> {
           return Alert.fromJson(json);
         }).toList();
 
-        // IMPORTANTE: Ordenamos las alertas para que las más recientes salgan arriba
+        // Ordenación en cliente, ya que el stream reactivo de Supabase no respeta el .order() del backend en tiempo real.
         alertasEnriquecidas.sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
         return AlertsLoaded(alertasEnriquecidas);
@@ -75,14 +87,20 @@ class AlertsBloc extends Bloc<AlertsEvent, AlertsState> {
     );
   }
 
+  /// Solicita el cambio de estado 'leído' sobre un registro específico.
   Future<void> _onMarkAlertAsRead(
     MarkAlertAsRead event,
     Emitter<AlertsState> emit,
   ) async {
     try {
       await _alertsRepository.markAsRead(event.alertId);
-    } catch (e) {
-      print("Error marcando alerta como leída: $e");
+    } catch (e, stackTrace) {
+      developer.log(
+        'Fallo al recargar la caché de iconos',
+        name: 'AlertsBloc',
+        error: e,
+        stackTrace: stackTrace,
+      );
     }
   }
 }

@@ -4,6 +4,8 @@ import 'package:homeflow/ui/alerts/notification_screen.dart';
 import 'package:homeflow/ui/dashboard/dashboard_screen.dart';
 import 'package:homeflow/ui/insights/insights_screen.dart';
 
+/// Estructura base de navegación de la aplicación.
+/// Mantiene el contenedor principal y el menú inferior flotante para conmutar entre las vistas de primer nivel.
 class MainScaffold extends StatefulWidget {
   const MainScaffold({super.key});
 
@@ -11,10 +13,12 @@ class MainScaffold extends StatefulWidget {
   State<MainScaffold> createState() => _MainScaffoldState();
 }
 
+/// Gestiona el índice activo de la navegación y la inyección de la vista correspondiente en el árbol de widgets.
 class _MainScaffoldState extends State<MainScaffold> {
   int _currentIndex = 0;
 
-  // Contenedores temporales
+  // Lista inmutable de las vistas de primer nivel
+  // Almacena las instancias constantes de las pantallas para inicializarlas en el arranque.
   final List<Widget> _screens = [
     const DashboardScreen(),
     const InsightsScreen(),
@@ -22,6 +26,7 @@ class _MainScaffoldState extends State<MainScaffold> {
     const AccountScreen(),
   ];
 
+  /// Construye el andamiaje principal de la interfaz aislando el cuerpo dinámico del menú fijo.
   @override
   Widget build(BuildContext context) {
     return Scaffold(

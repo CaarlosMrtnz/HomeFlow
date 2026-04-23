@@ -4,6 +4,7 @@ import random
 from supabase import create_client, Client
 from dotenv import load_dotenv
 
+# Carga el archivo .env en el entorno local para no exponer credenciales en el código fuente.
 load_dotenv()
 
 url = os.environ.get('SPB_URL')
@@ -13,8 +14,10 @@ if not all([url, key]):
     print("Error: Revisa tus variables de entorno en el archivo .env")
     exit()
 
+# Instancia global del cliente para mantener el pool de conexiones en el script.
 supabase: Client = create_client(url, key)
 
+# Define los umbrales operativos estáticos por tipo de suministro (1: Luz, 2: Agua, 3: Gas).
 range_config = {
     1: {"normal": (0.1, 3.5),  "anomaly": (3.51, 6.0)}, 
     2: {"normal": (0.5, 20.0), "anomaly": (20.01, 30.0)},
@@ -82,6 +85,7 @@ def simulate_usage(devices):
             value = round(random.uniform(rango[0], rango[1]), 2)
 
     try:
+        # Volcado de la métrica en la tabla de lecturas usando el rol del script.
         supabase.table('readings').insert({
             "user_id": device_owner,
             "supply_type_id": supply_id,
@@ -107,6 +111,7 @@ def get_target_user():
         
         email_map = {}
         try:
+            # Requiere que SPB_KEY sea la service_role key, de lo contrario esto lanzará una excepción.
             users_response = supabase.auth.admin.list_users()
             for user in users_response:
                 email_map[user.id] = user.email

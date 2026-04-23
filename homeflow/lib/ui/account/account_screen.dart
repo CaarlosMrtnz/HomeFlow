@@ -10,6 +10,8 @@ import 'about_screen.dart';
 import '../../logic/profile/profile_cubit.dart';
 import '../../logic/auth/auth_bloc.dart';
 
+/// Pantalla principal de la cuenta del usuario.
+/// Muestra los datos del perfil escuchando reactivamente a [ProfileCubit] y sirve como menú de navegación para ajustes de la app.
 class AccountScreen extends StatelessWidget {
   const AccountScreen({super.key});
 
@@ -18,9 +20,11 @@ class AccountScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFE5EDFC),
       body: SafeArea(
+        // Escucha los cambios de estado del perfil para repintar automáticamente si el usuario edita su información.
         child: BlocBuilder<ProfileCubit, ProfileState>(
           builder: (context, state) {
             if (state is ProfileLoading || state is ProfileInitial) {
+              // Bloquea la vista con un indicador mientras el repositorio resuelve la petición a Supabase.
               return const Center(child: CircularProgressIndicator(color: Color(0xFF71B9FD)));
             }
 
@@ -48,6 +52,7 @@ class AccountScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
+                              // Fallback de seguridad en caso de que el registro en BD no tenga nombre asignado.
                               profile.fullName?.isNotEmpty == true ? profile.fullName! : "Personal Profile",
                               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFF203DA3)),
                             ),
@@ -105,6 +110,7 @@ class AccountScreen extends StatelessWidget {
                     title: 'Share App',
                     onTap: () async {
                       await Clipboard.setData(const ClipboardData(text: 'www.homeflow.com'));
+                      // Valida que el widget siga en el árbol antes de usar el context tras el await para evitar excepciones.
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -160,7 +166,8 @@ class AccountScreen extends StatelessWidget {
     );
   }
 
-  // Helper para construir cada tarjeta del menú de forma idéntica a tu diseño
+  /// Genera las tarjetas del menú reutilizando estilos y comportamiento táctil.
+  // Helper para construir cada tarjeta del menú de forma idéntica a tu diseño.
   Widget _buildMenuCard({required IconData icon, required String title, required VoidCallback onTap}) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),

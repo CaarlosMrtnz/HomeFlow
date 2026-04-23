@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../data/auth_repository.dart';
 import '../../logic/auth/login_cubit.dart';
 
+/// Punto de entrada a la vista de autenticación.
+/// Configura la inyección de dependencias proveyendo una instancia acotada de [LoginCubit] a esta rama del árbol.
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
@@ -15,6 +17,7 @@ class LoginScreen extends StatelessWidget {
   }
 }
 
+/// Widget con estado que aisla la lógica de los controladores de texto y la reactividad de la interfaz.
 class _LoginForm extends StatefulWidget {
   const _LoginForm();
 
@@ -27,6 +30,7 @@ class _LoginFormState extends State<_LoginForm> {
   final _passwordController = TextEditingController();
   bool _isLoginMode = true;
 
+  /// Libera los recursos de memoria asignados a los controladores al destruir el widget.
   @override
   void dispose() {
     _emailController.dispose();
@@ -34,6 +38,7 @@ class _LoginFormState extends State<_LoginForm> {
     super.dispose();
   }
 
+  /// Analiza el string de la excepción de red y devuelve un mensaje de interfaz legible.
   // Traductor de errores
   String _getFriendlyErrorMessage(String rawError) {
     final errorLower = rawError.toLowerCase();
@@ -50,10 +55,11 @@ class _LoginFormState extends State<_LoginForm> {
       return 'Password must be at least 6 characters long.';
     }
     
-    // Por si es un error que no tenemos mapeado
+    // Fallback estandarizado para excepciones no contempladas en el dominio
     return 'An unexpected error occurred. Please try again.';
   }
 
+  /// Dispara el flujo de autenticación si se superan las barreras de validación local.
   void _submit(BuildContext context) {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
@@ -74,7 +80,7 @@ class _LoginFormState extends State<_LoginForm> {
       return;
     }
  
-    // Lamada al cubit
+    // Llamada al cubit
     final cubit = context.read<LoginCubit>();
     if (_isLoginMode) {
       cubit.signIn(email, password);
@@ -83,6 +89,7 @@ class _LoginFormState extends State<_LoginForm> {
     }
   }
 
+  /// Helper visual que estandariza los mensajes de error superpuestos en la pantalla.
   void _showErrorSnackBar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

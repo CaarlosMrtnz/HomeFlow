@@ -5,6 +5,7 @@ import 'package:homeflow/core/models/reading.dart';
 
 import '../../logic/dashboard/dashboard_bloc.dart';
 
+/// Pantalla de análisis que visualiza el histórico de consumos semanales mediante gráficos de barras interactivos.
 class InsightsScreen extends StatefulWidget {
   const InsightsScreen({super.key});
 
@@ -12,15 +13,17 @@ class InsightsScreen extends StatefulWidget {
   State<InsightsScreen> createState() => _InsightsScreenState();
 }
 
+/// Mantiene el estado del filtro de visualización activo y transforma los datos brutos del BLoC para el formato requerido por la gráfica.
 class _InsightsScreenState extends State<InsightsScreen> {
   // 0 = General, 1 = Luz, 2 = Agua, 3 = Gas
   int _selectedFilter = 0;
 
+  /// Extrae y acumula las lecturas de un tipo de suministro específico, mapeándolas a los 7 días de la semana actual.
   List<double> _getWeeklyData(List<Reading> liveReadings, int supplyId) {
     final List<double> weeklyTotals = List.filled(7, 0.0);
     final now = DateTime.now();
 
-    // Averiguamos cuántos días restar para llegar al Lunes a las 00:00:00
+    // Calcula el límite temporal inferior desplazando la fecha actual al inicio de la semana
     final monday = now.subtract(Duration(days: now.weekday - 1));
     final startOfThisWeek = DateTime(monday.year, monday.month, monday.day);
     // El fin de la semana es el Domingo a las 23:59:59
@@ -42,6 +45,7 @@ class _InsightsScreenState extends State<InsightsScreen> {
     return weeklyTotals;
   }
 
+  /// Construye el árbol de widgets reactivo basándose en las emisiones del [DashboardBloc].
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -154,6 +158,8 @@ class _InsightsScreenState extends State<InsightsScreen> {
     );
   }
 
+  /// Configura y renderiza el gráfico de barras apiladas utilizando [fl_chart].
+  /// Gestiona de forma dinámica las escalas, ejes y formato de unidades según el filtro activo.
   Widget _buildBarChart(List<double> elecData, List<double> waterData, List<double> gasData) {
     return BarChart(
       BarChartData(
@@ -259,6 +265,8 @@ class _InsightsScreenState extends State<InsightsScreen> {
     );
   }
 
+  /// Componente reutilizable para los selectores de tipo de suministro. 
+  /// Desencadena el redibujado local mutando `_selectedFilter`.
   Widget _buildFilterButton({
     required int id,
     required String title,

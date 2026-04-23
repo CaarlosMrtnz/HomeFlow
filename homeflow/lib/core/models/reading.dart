@@ -11,6 +11,7 @@ class Reading extends Equatable {
   final String deviceName;
   final String deviceIconName;
 
+  /// Constructor constante para garantizar la inmutabilidad de la lectura.
   const Reading ({
     required this.id,
     required this.userId,
@@ -39,12 +40,14 @@ class Reading extends Equatable {
     );
   }
   
-  // Para enviar datos a Supabase
+  // Para enviar datos a Supabase.
+  /// Prepara el mapa de clave-valor excluyendo campos autogenerados por PostgreSQL.
   Map<String, dynamic> toJson() {
     return {
       'user_id': userId,
       'supply_type_id': supplyTypeId,
       'value': value,
+      'device_id': deviceId
     };
     // No mandamos el 'id' ni el 'created_at' porque la BD los genera solos
   }
@@ -54,6 +57,7 @@ class Reading extends Equatable {
     id, 
     userId, 
     supplyTypeId, 
+    deviceId,
     value, 
     createdAt, 
     deviceName,

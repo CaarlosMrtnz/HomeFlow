@@ -20,20 +20,28 @@ import 'ui/splash/splash_screen.dart';
 import 'ui/auth/login_screen.dart';
 import 'ui/main/main_scaffold.dart';
 
+/// Punto de entrada de la aplicación.
+/// Inicializa el framework, inyecta las variables de entorno estáticas y establece la conexión asíncrona con el backend.
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   await dotenv.load(fileName: ".env");
   
+  final String supabaseUrl = dotenv.env['SPB_URL'] ?? (throw Exception('Falta SPB_URL en el archivo .env'));
+  final String supabaseKey = dotenv.env['SPB_KEY'] ?? (throw Exception('Falta SPB_KEY en el archivo .env'));
+  
   await Supabase.initialize(
-    url: dotenv.env['SPB_URL']!,
-    anonKey: dotenv.env['SPB_KEY']!,
+    url: supabaseUrl,
+    anonKey: supabaseKey,
   );
+
+  runApp(const MainApp());
 
   runApp(const MainApp());
 }
 
-// Con esto la llave no se destruya al redibujar
+/// Raíz del árbol de widgets.
+/// Se define como StatefulWidget para aislar y preservar propiedades que no deben re-instanciarse en cada repintado del framework.
 class MainApp extends StatefulWidget {
   const MainApp({super.key});
 
@@ -42,9 +50,10 @@ class MainApp extends StatefulWidget {
 }
 
 class _MainAppState extends State<MainApp> {
-  // LLave para controlar la navegación desde fuera
+  /// Permite ejecutar operaciones de enrutamiento desde capas de lógica sin requerir un [BuildContext] local.
   final _navigatorKey = GlobalKey<NavigatorState>();
 
+  /// Construye el proveedor de estado global y el sistema de rutas estáticas.
   @override
   Widget build(BuildContext context) {
     return RepositoryProvider(
@@ -54,12 +63,10 @@ class _MainAppState extends State<MainApp> {
           authRepository: context.read<AuthRepository>(),
         )..add(AuthSubscriptionRequested()),
         
-        // El BlocListener envuelve MaterialApp con el BlocListener
         child: BlocListener<AuthBloc, AuthState>(
           listener: (context, state) {
             // Cuando el estado cambie a "desautenticado"
             if (state is Unauthenticated) {
-              // Llave para borrar el historial de pantallas y forzar el Login
               _navigatorKey.currentState?.pushNamedAndRemoveUntil('/login', (route) => false);
             }
           },
@@ -77,6 +84,8 @@ class _MainAppState extends State<MainApp> {
             routes: {
               '/': (context) => const SplashScreen(),
               '/login': (context) => const LoginScreen(),
+              // Acota el ciclo de vida de los BLoCs de dominio a la existencia de la ruta principal.
+              // Al cerrar sesión y destruir la ruta, estos BLoCs se destruyen automáticamente liberando memoria y cerrando los WebSockets.
               '/home': (context) => MultiBlocProvider(
                 providers: [
                   BlocProvider(create: (context) => DashboardBloc(repository: DashboardRepository())..add(StartListeningReadings())),

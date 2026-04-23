@@ -5,6 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../core/models/profile.dart';
 import '../../logic/profile/profile_cubit.dart';
 
+/// Pantalla para visualizar y editar la información personal del usuario.
+/// Escucha los cambios de estado del [ProfileCubit] para renderizar la vista adecuada.
 class PersonalInfoScreen extends StatelessWidget {
   const PersonalInfoScreen({super.key});
 
@@ -53,6 +55,7 @@ class PersonalInfoScreen extends StatelessWidget {
   }
 }
 
+/// Formulario interactivo que gestiona el estado local durante la edición del perfil.
 class _PersonalInfoForm extends StatefulWidget {
   final Profile profile;
   
@@ -67,6 +70,7 @@ class _PersonalInfoFormState extends State<_PersonalInfoForm> {
   late TextEditingController _phoneController;
   bool _isSubmitting = false; // Controla el estado de carga del botón
 
+  /// Inicializa los campos de texto con la información actual extraída de la memoria.
   @override
   void initState() {
     super.initState();
@@ -74,6 +78,7 @@ class _PersonalInfoFormState extends State<_PersonalInfoForm> {
     _phoneController = TextEditingController(text: widget.profile.phoneNumber ?? '');
   }
 
+  /// Libera los controladores del ciclo de vida de Flutter para prevenir fugas de memoria.
   @override
   void dispose() {
     _nameController.dispose();
@@ -81,7 +86,7 @@ class _PersonalInfoFormState extends State<_PersonalInfoForm> {
     super.dispose();
   }
 
-  // Traductor de errores de PostgreSQL
+  /// Parsea cadenas de error genéricas y devuelve mensajes legibles para la vista.
   String _getFriendlyErrorMessage(String rawError) {
     final errorLower = rawError.toLowerCase();
     if (errorLower.contains('unique constraint') || errorLower.contains('duplicate key')) {
@@ -160,7 +165,7 @@ class _PersonalInfoFormState extends State<_PersonalInfoForm> {
                   child: ElevatedButton(
                     onPressed: _isSubmitting ? null : () async {
                       FocusScope.of(context).unfocus(); 
-                      setState(() => _isSubmitting = true); // Arranca el loader
+                      setState(() => _isSubmitting = true); // Activa la bandera de concurrencia para la interfaz de carga.
 
                       try {
                         await context.read<ProfileCubit>().updateProfile(
@@ -179,7 +184,7 @@ class _PersonalInfoFormState extends State<_PersonalInfoForm> {
                         }
                       } catch (e) {
                         if (mounted) {
-                          // Si falla, mostramos el error limpio
+                          // Si falla, muestra el error limpio
                           final friendlyError = _getFriendlyErrorMessage(e.toString());
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(

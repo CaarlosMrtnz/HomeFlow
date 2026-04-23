@@ -6,6 +6,8 @@ import '../../core/utils/icon_helper.dart';
 import '../../logic/dashboard/dashboard_bloc.dart';
 import '../../core/models/reading.dart';
 
+/// Interfaz principal que consolida el resumen de consumos diarios y la barra de búsqueda de dispositivos.
+/// Se suscribe al estado reactivo del [DashboardBloc] para reflejar los datos del simulador en tiempo real.
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -13,10 +15,12 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
+/// Estado mutable de la vista que controla la transición entre el modo de visualización y el modo de búsqueda.
 class _DashboardScreenState extends State<DashboardScreen> {
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
 
+  /// Filtra y acumula el valor total de las lecturas registradas desde las 00:00 del día en curso para un suministro específico.
   double _calculateTodayTotal(List<Reading> readings, int supplyId) {
     final now = DateTime.now();
     final todayReadings = readings.where((r) {
@@ -29,6 +33,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return todayReadings.fold(0.0, (sum, reading) => sum + reading.value);
   }
 
+  /// Despliega una lámina inferior (Bottom Sheet) con información pedagógica sobre la métrica seleccionada.
   void _showInfoBottomSheet(BuildContext context, String supplyType) {
     String description = '';
     
@@ -91,6 +96,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  /// Construye el árbol de widgets principal reaccionando a las emisiones del [DashboardBloc].
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -123,6 +129,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  /// Pinta las tarjetas resumen de consumos acumulados y el acceso a la barra de búsqueda.
   Widget _buildNormalDashboard(double elecTotal, double waterTotal, double gasTotal, DashboardBloc dashboardBloc) {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
@@ -225,6 +232,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  /// Despliega el catálogo interactivo de dispositivos y su consumo parcial aplicando filtros por texto.
   Widget _buildSearchMode(List<Reading> allReadings, List<dynamic> allDevices) {
     final now = DateTime.now();
     
@@ -299,7 +307,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     final supplyTypeId = device['supply_type_id'] as int;
                     final deviceIconName = device['icon_name'].toString();
 
-                    // Si hoy tiene lecturas, sale el total acumulado; si no, 0.0
                     final totalValue = todayTotals[deviceId] ?? 0.0; 
                     
                     // Colores según el tipo de suministro
@@ -358,6 +365,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  /// Template estandarizado para los paneles contenedores de métricas totales.
   Widget _buildSupplyCard({
     required String tagText,
     required String title,

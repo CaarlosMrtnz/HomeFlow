@@ -2,6 +2,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/models/reading.dart';
 
+/// Repositorio que centraliza las consultas y mutaciones de datos para la pantalla principal (Dashboard).
+/// Aisla a la UI de las dependencias directas con Supabase.
 class DashboardRepository {
   final SupabaseClient _supabase;
 
@@ -11,6 +13,7 @@ class DashboardRepository {
       : _supabase = supabaseClient ?? Supabase.instance.client;
 
   /// Devuelve un flujo (Stream) de lecturas en tiempo real.
+  /// Se suscribe mediante WebSockets a la tabla `readings`.
   Stream<List<Reading>> getRealtimeReadings() {
 
     final userId = _supabase.auth.currentUser?.id;
@@ -34,6 +37,7 @@ class DashboardRepository {
         });
   }
 
+  /// Consulta la vista o tabla precalculada con el resumen de consumo semanal.
   Future<List<dynamic>> getWeeklySummary() async {
     final userId = _supabase.auth.currentUser?.id;
     
@@ -49,7 +53,7 @@ class DashboardRepository {
     return response;
   }
 
-  // Obtiene los dispositivos globales y los propios del usuario
+  /// Descarga el catálogo de dispositivos disponibles.
   Future<List<Map<String, dynamic>>> getDevices() async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) return [];
@@ -71,7 +75,7 @@ class DashboardRepository {
     });
   }
 
-  // Elimina un dispositivo personalizado
+  /// Borra físicamente un dispositivo validando por id de usuario.
   Future<void> deleteDevice(int deviceId) async {
     final userId = _supabase.auth.currentUser?.id;
     if (userId == null) throw Exception('Usuario no autenticado');
@@ -84,6 +88,7 @@ class DashboardRepository {
         .eq('user_id', userId);
   }
 
+  /// Cierra la sesión en el cliente de Supabase.
   Future<void> signOut() async {
     await _supabase.auth.signOut();
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+/// Pantalla interactiva para recopilar métricas de satisfacción del usuario.
 class FeedbackScreen extends StatefulWidget {
   const FeedbackScreen({super.key});
 
@@ -8,11 +9,14 @@ class FeedbackScreen extends StatefulWidget {
   State<FeedbackScreen> createState() => _FeedbackScreenState();
 }
 
+/// Gestiona el estado local del formulario y la comunicación de red para enviar el feedback.
 class _FeedbackScreenState extends State<FeedbackScreen> {
   int _rating = 0; // Guardará el valor de 1 a 5
   final TextEditingController _descriptionController = TextEditingController();
   bool _isSubmitting = false;
 
+  /// Inicia el proceso de validación y mutación en base de datos.
+  /// Muta el estado `_isSubmitting` para gestionar la concurrencia visual y evitar envíos duplicados.
   Future<void> _submitFeedback() async {
     // Validación básica
     if (_rating == 0) {
@@ -35,9 +39,9 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
       // Inserta si es nuevo, actualiza si el user_id ya existe
       await Supabase.instance.client.from('feedback').upsert({
         'user_id': userId,
-        'rating': _rating, // Coge las estrellas reales de la interfaz
-        'description': _descriptionController.text.trim(), // Coge el texto real
-      }, onConflict: 'user_id'); // Se fija en el usuario para saber si ya existe
+        'rating': _rating, // Asigna el valor numérico del estado actual de la UI.
+        'description': _descriptionController.text.trim(), // Extrae el payload del controlador de texto.
+      }, onConflict: 'user_id'); // Utiliza user_id como clave de resolución de conflictos para ejecutar la sobreescritura.
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -47,7 +51,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
             behavior: SnackBarBehavior.floating,
           ),
         );
-        Navigator.pop(context); // Volvemos a la pantalla anterior
+        Navigator.pop(context); // Vuelve a la pantalla anterior
       }
     } catch (e) {
       if (mounted) {
@@ -62,12 +66,14 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     }
   }
 
+  /// Destruye el controlador de texto cuando el widget sale del árbol para prevenir fugas de memoria.
   @override
   void dispose() {
     _descriptionController.dispose();
     super.dispose();
   }
 
+  /// Construye el árbol de widgets de la interfaz gráfica.
   @override
   Widget build(BuildContext context) {
     return Scaffold(

@@ -6,7 +6,7 @@ import '../../../core/models/enums.dart';
 /// 
 /// Usamos [Equatable] para garantizar la igualdad por valor (value equality). 
 /// En BLoC, si emitimos un estado con la misma referencia de memoria o los mismos 
-/// valores exactos, el gestor corta el flujo y no repinta la UI. Esto es vital 
+/// valores exactos, el gestor corta el flujo y evita reconstrucciones innecesarias en el árbol de widgets. Esto es vital 
 /// para el rendimiento cuando manejamos listas de alertas.
 class Alert extends Equatable {
   final int id;
@@ -37,6 +37,8 @@ class Alert extends Equatable {
   /// (Supabase) a nuestro modelo de Dart. El resto de la App no necesita saber 
   /// si los datos vienen de Supabase, Firebase o un JSON local.
   factory Alert.fromJson(Map<String, dynamic> json) {
+    // Si la query a Supabase no cruza los datos con la tabla de dispositivos, 
+     // inicializamos con un mapa vacío para evitar un NullPointerException más abajo.
     final deviceData = json['devices'] ?? {};
 
     return Alert(
@@ -52,12 +54,14 @@ class Alert extends Equatable {
     );
   }
 
+  /// Prepara el modelo para ser enviado a la DB por si necesito hacer un UPDATE (por ejemplo, marcar la alerta como leída).
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'user_id': userId,
       'title': title,
-      'description': description,
+      // Extraemos el valor del enum en String para que coincida con el user-defined de Postgres.
+      'description': description.name,
       'is_read': isRead,
       'created_at': createdAt.toIso8601String(),
       'supply_type_id': supplyTypeId,

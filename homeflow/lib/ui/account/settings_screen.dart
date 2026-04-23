@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+/// Interfaz visual para las preferencias de usuario y configuración de la aplicación.
+/// Actualmente funciona como un prototipo visual (mock) sin persistencia de estado real.
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
@@ -7,6 +9,7 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
+/// Gestiona el estado efímero de los interruptores de la interfaz gráfica.
 class _SettingsScreenState extends State<SettingsScreen> {
   // Variables locales para simular que los ajustes cambian
   bool _pushNotifications = true;
@@ -49,6 +52,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _buildSwitchRow('Dark Mode', Icons.dark_mode_outlined, _darkMode, (val) {
                 setState(() => _darkMode = val);
                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Dark mode is coming soon!')));
+                // Revierte visualmente el interruptor tras medio segundo para indicar que la función está deshabilitada.
                 Future.delayed(const Duration(milliseconds: 500), () => setState(() => _darkMode = false));
               }),
             ]),
@@ -65,6 +69,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  /// Renderiza los encabezados de agrupación con tipografía y espaciado estandarizados.
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.only(left: 8, bottom: 12),
@@ -75,6 +80,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  /// Envuelve un bloque de configuraciones en un contenedor con fondo blanco, bordes redondeados y sombra.
   Widget _buildSettingsCard(List<Widget> children) {
     return Container(
       decoration: BoxDecoration(
@@ -88,6 +94,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  /// Construye una fila interactiva vinculando el renderizado visual con su callback de mutación de estado.
   Widget _buildSwitchRow(String title, IconData icon, bool currentValue, Function(bool) onChanged) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -118,6 +125,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  /// Genera una línea separadora con indentación para respetar el margen de los iconos.
   Widget _buildDivider() {
     return const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9), indent: 60);
   }

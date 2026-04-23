@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:homeflow/core/utils/icon_helper.dart';
 import '../../logic/dashboard/dashboard_bloc.dart';
 
+/// Vista de detalle para una categoría de suministro específica (Luz, Agua o Gas).
+/// Filtra el estado global del Dashboard para mostrar únicamente los dispositivos y consumos correspondientes a su [supplyId].
 class SupplyDetailScreen extends StatelessWidget {
   final int supplyId;
   final String title;
@@ -17,6 +19,8 @@ class SupplyDetailScreen extends StatelessWidget {
     required this.unit,
   });
 
+  /// Construye y despliega un cuadro de diálogo modal para registrar un nuevo dispositivo.
+  /// Captura el nombre y el identificador visual mediante un estado efímero aislado.
   void _showAddDeviceDialog(BuildContext context) {
     final controller = TextEditingController();
     
@@ -87,7 +91,7 @@ class SupplyDetailScreen extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               if (controller.text.trim().isNotEmpty) {
-                // Ahora mandamos el nombre, el tipo Y EL ICONO
+                // Ahora manda el nombre, el tipo Y EL ICONO
                 context.read<DashboardBloc>().add(
                   AddDeviceRequested(controller.text.trim(), supplyId, selectedIcon)
                 );
@@ -106,6 +110,7 @@ class SupplyDetailScreen extends StatelessWidget {
     );
   }
 
+  /// Construye la interfaz principal cruzando las lecturas con el catálogo de dispositivos filtrados por tipo.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -127,13 +132,17 @@ class SupplyDetailScreen extends StatelessWidget {
         builder: (context, state) {
           if (state is DashboardLoaded) {
             final now = DateTime.now();
+            // Aislamiento de lecturas correspondientes a este suministro y al día en curso.
             final todayReadings = state.readings.where((r) => r.supplyTypeId == supplyId && r.createdAt.year == now.year && r.createdAt.month == now.month && r.createdAt.day == now.day).toList();
+            // Filtrado del catálogo general para obtener solo los dispositivos de esta categoría.
             final currentSupplyDevices = state.devices.where((d) => d['supply_type_id'] == supplyId).toList();
 
+            // Mapas de memoria local para consolidar la agregación de datos sin requerir sub-consultas en cada iteración de la UI.
             final Map<int, double> deviceTotals = {};
             final Map<int, String> deviceNames = {};
             final Map<int, String?> deviceIcons = {}; 
 
+            // Inicialización de la estructura con los dispositivos válidos.
             for (var dev in currentSupplyDevices) {
               int id = dev['id'];
               deviceTotals[id] = 0.0;
@@ -141,6 +150,7 @@ class SupplyDetailScreen extends StatelessWidget {
               deviceIcons[id] = dev['icon_name']; 
             }
 
+            // Acumulación del consumo total por dispositivo.
             for (var r in todayReadings) {
               if (deviceTotals.containsKey(r.deviceId)) {
                 deviceTotals[r.deviceId] = deviceTotals[r.deviceId]! + r.value;

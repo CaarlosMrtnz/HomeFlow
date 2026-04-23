@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
+/// Pantalla estática de información de la aplicación (Acerca de).
+/// Al ser puramente presentacional y no requerir redibujados basados en datos dinámicos, hereda de [StatelessWidget].
 class AboutScreen extends StatelessWidget {
   const AboutScreen({super.key});
 
+  /// Construye el árbol de widgets principal.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -10,6 +13,7 @@ class AboutScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        // Delega la navegación de retroceso a la pila actual del framework
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF203DA3)),
           onPressed: () => Navigator.pop(context),
@@ -63,14 +67,14 @@ class AboutScreen extends StatelessWidget {
                     Icon(Icons.school_outlined, color: Color(0xFFBDB2FF), size: 32),
                     SizedBox(height: 16),
                     Text(
-                      'Final Degree Project', // Trabajo de Fin de Grado
+                      'Final Degree Project',
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF203DA3)),
                     ),
                     SizedBox(height: 8),
                     Text(
                       'Designed and developed by\nCarlos Martínez Agustín.', 
                       textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 14, color: Color(0xFF64748B), height: 1.5),
+                      style: TextStyle(fontSize: 14, color: Color(0xFF71B9FD), height: 1.5),
                     ),
                   ],
                 ),
@@ -79,7 +83,7 @@ class AboutScreen extends StatelessWidget {
               const Spacer(),
               const Text(
                 '© 2026 HomeFlow. All rights reserved.',
-                style: TextStyle(color: Colors.grey, fontSize: 12),
+                style: TextStyle(color: Color(0xFF71B9FD), fontSize: 12),
               ),
               const SizedBox(height: 40),
             ],

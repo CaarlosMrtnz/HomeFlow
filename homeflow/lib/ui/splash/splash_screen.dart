@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../logic/auth/auth_bloc.dart';
 
+/// Vista inicial de carga que retiene al usuario mientras el BLoC de autenticación resuelve el estado de la sesión.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -9,6 +10,8 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
+/// Estado del widget de entrada. 
+/// Mantenido como StatefulWidget para permitir futuras inicializaciones locales o controladores de animación.
 class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
@@ -17,6 +20,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Escucha pasivamente las emisiones del AuthBloc para enrutar al usuario sin provocar reconstrucciones visuales del layout.
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
       if (state is Authenticated) {

@@ -218,8 +218,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
 
     // Formateo de la hora
+    final localDateTime = alert.createdAt.toLocal();
+
     final timeString = 
-    "${alert.createdAt.hour.toString().padLeft(2, '0')}:${alert.createdAt.minute.toString().padLeft(2, '0')}:${alert.createdAt.second.toString().padLeft(2, '0')}";
+    "${localDateTime.hour.toString().padLeft(2, '0')}:${localDateTime.minute.toString().padLeft(2, '0')}:${localDateTime.second.toString().padLeft(2, '0')}";
 
     return GestureDetector(
       onTap: () {

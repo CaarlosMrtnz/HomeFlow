@@ -1,6 +1,7 @@
 part of 'alerts_bloc.dart';
 
 // Con 'sealed class' se obliga a la UI a manejar todos los estados en un switch.
+/// Estado base inmutable para la máquina de estados del BLoC de alertas.
 sealed class AlertsState extends Equatable {
   const AlertsState();
 
@@ -12,10 +13,11 @@ sealed class AlertsState extends Equatable {
 // Estado de arranque. La app acaba de abrirse y aún no hemos pedido datos.
 final class AlertsInitial extends AlertsState {}
 
-// Estado de espera. Le indica a la UI que debe mostrar un CircularProgressIndicator.
+// Estado de espera. Indica a la capa de presentación que debe renderizar una interfaz de carga.
+/// Representa una transición asíncrona en curso (conexión al WebSocket o latencia de red).
 final class AlertsLoading extends AlertsState {}
 
-// El estado principal. Aquí guardamos las lecturas que llegan desde Supabase.
+// El estado principal. Aquí mantenemos en memoria la colección de alertas sincronizadas con Supabase.
 final class AlertsLoaded extends AlertsState {
   final List<Alert> alerts;
   const AlertsLoaded(this.alerts);
@@ -26,6 +28,7 @@ final class AlertsLoaded extends AlertsState {
 }
 
 // Estado en caso de fallo de la conexión con el repositorio o por una caída de internet.
+/// Transporta el mensaje de excepción a la capa de presentación.
 final class AlertsError extends AlertsState {
   final String message;
   const AlertsError(this.message);

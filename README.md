@@ -2,33 +2,46 @@
 
 HomeFlow es el proyecto práctico de mi Trabajo de Fin de Grado (TFG). Es una aplicación diseñada para centralizar los datos de consumo doméstico (agua, electricidad y gas) en una única interfaz. El objetivo es ofrecer un control detallado del gasto de la vivienda y proporcionar un sistema de alertas en tiempo real ante posibles anomalías o consumos críticos.
 
-## 🚀 Características Principales
+## 🚀 Características principales
 * **Monitorización en tiempo real:** Visualización del estado y consumo actual de los electrodomésticos y grifos.
 * **Sistema de alertas reactivo:** Notificaciones instantáneas (ej. detección de fugas o picos de tensión) generadas en la base de datos y reflejadas inmediatamente en la interfaz.
 * **Historial gráfico:** Representación visual de los datos históricos para identificar patrones de gasto.
 * **Arquitectura robusta:** Separación estricta entre la interfaz de usuario y la lógica de negocio para garantizar la escalabilidad y el rendimiento.
 
-## 🛠️ Stack Tecnológico
+## 🛠️ Stack tecnológico
 He dividido la arquitectura del proyecto en tres piezas fundamentales:
 
 * **Frontend (App Móvil):** Desarrollado con **Flutter** y **Dart**. He implementado el patrón arquitectónico **BLoC** (Business Logic Component) junto con `equatable` para gestionar el estado de forma predecible, optimizando los repintados de la interfaz.
 * **Backend (Base de Datos):** Gestionado a través de **Supabase** (PostgreSQL). Actúa como única fuente de verdad (*Single Source of Truth*). He configurado políticas de seguridad (RLS), *Triggers* SQL para automatizar las alertas y suscripciones mediante *WebSockets* para la bidireccionalidad de datos.
 * **Simulador (Hardware Mock):** Al carecer de sensores IoT físicos, he programado un script en **Python** que inyecta datos de consumo en la base de datos de forma continua, emulando el comportamiento real de una vivienda.
 
-## 📂 Estructura del Repositorio
+## 📂 Estructura del repositorio
 * `/homeflow`: Contiene el código fuente completo de la aplicación móvil (Flutter).
 * `/simulator`: Incluye el script de simulación y la lógica de generación aleatoria de consumos (Python).
+* `/database`: Infraestructura programada en SQL (PostgreSQL). Incluye el esquema de tablas, funciones de control de consumo y los disparadores (triggers) de automatización.
 
-## ⚙️ Requisitos Previos
+## 🗄️ Base de datos y lógica de servidor
+Para garantizar que el sistema sea proactivo y no dependa exclusivamente de que la app esté abierta, he implementado la lógica de negocio directamente en el motor de la base de datos:
+
+*   **Integridad referencial:** Esquema diseñado para mantener la coherencia entre usuarios, dispositivos y lecturas de consumo.
+*   **Automatización (Triggers):** He programado disparadores que analizan cada nueva lectura en tiempo real. Si se detecta un consumo por encima de los umbrales definidos (agua, gas o electricidad), el sistema genera una alerta automáticamente.
+*   **Gestión de estados:** El backend rastrea si un dispositivo ha sido dejado encendido o apagado basándose en el flujo de datos enviado por el simulador.
+
+## ⚙️ Requisitos previos
 Para poder compilar y ejecutar este proyecto en un entorno local, es necesario tener instalado:
 * Flutter SDK (Versión 3.x o superior).
 * Python 3 (Versión 3.8 o superior).
 * Un entorno de desarrollo como VS Code o Android Studio.
 * Las credenciales del proyecto de Supabase (URL y Anon Key).
 
-## 💻 Instalación y Puesta en Marcha
+## 💻 Instalación y puesta en marcha
 
 Sigue estos pasos para arrancar el entorno completo (Simulador + Aplicación):
+
+**0. Preparar la base de datos (Opcional)**
+Si quieres replicar el entorno completo en una nueva instancia de Supabase:
+1. Ejecuta el contenido de `database/schema.sql` en el SQL Editor de tu proyecto.
+2. Ejecuta `database/functions.sql` y `database/triggers.sql` para habilitar la lógica de alertas automáticas y la sincronización de perfiles.
 
 **1. Clonar el repositorio**
 git clone https://github.com/CaarlosMrtnz/HomeFlow.git
